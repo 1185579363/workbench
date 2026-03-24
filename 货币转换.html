@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>货币转换工具 V4</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 32px 16px;
+            background: #f5f7fb;
+            color: #111827;
+        }
+    
+        .page-container {
+            width: 100%;
+            max-width: 520px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 20px 22px 18px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+            width: 100%;
+            border: 1px solid #e5e7eb;
+        }
+    
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+    
+        h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h2 span.icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            background: #fef3c7;
+            color: #f59e0b;
+            font-size: 16px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.13em;
+            color: #6b7280;
+            background: #f9fafb;
+            white-space: nowrap;
+        }
+    
+        .input-group {
+            margin-bottom: 14px;
+        }
+    
+        label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: #374151;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+        }
+
+        label span.hint {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .input-inner {
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            padding: 4px 10px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+
+        .input-inner:focus-within {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35);
+            background: #ffffff;
+        }
+    
+        input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 4px 4px 4px 0;
+            font-size: 14px;
+            font-weight: 500;
+            box-sizing: border-box;
+            color: #111827;
+        }
+
+        input::placeholder {
+            color: #9ca3af;
+        }
+
+        input:focus {
+            outline: none;
+        }
+    
+        .badges {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+    
+        .badge {
+            flex: 1;
+            text-align: center;
+            font-size: 0.85rem;
+            padding: 6px 0;
+            border-radius: 999px;
+            background: #f3f4f6;
+            color: #6b7280;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.1s, transform 0.1s;
+            user-select: none;
+            border: 1px solid #e5e7eb;
+        }
+    
+        .badge:active {
+            background: #e5e7eb;
+            transform: scale(0.98);
+        }
+    
+        #outputWrapper {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.4s ease-out;
+        }
+    
+        #outputInner {
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease-in;
+        }
+        
+        #outputWrapper.open {
+            grid-template-rows: 1fr;
+        }
+        
+        #outputWrapper.open #outputInner {
+            opacity: 1;
+            padding-top: 0.5rem; 
+        }
+    
+        .result-card {
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            position: relative;
+        }
+    
+        .result-card.usd {
+            border-color: #dbeafe;
+            background: #eff6ff;
+        }
+    
+        .result-card.cny {
+            border-color: #d1fae5;
+            background: #ecfdf5;
+            margin-bottom: 0;
+        }
+    
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .row:last-child { margin-bottom: 0; }
+    
+        .res-label {
+            font-size: 0.8rem;
+            color: #6b7280;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .res-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        .usd .res-value { color: #2563eb; }
+        .cny .res-value { color: #16a34a; }
+        
+        .res-sub {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+    
+        .copy-btn {
+            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(0,0,0,0.05);
+            color: #374151;
+            font-size: 0.75rem;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 500;
+            transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+        }
+        .copy-btn:hover {
+            background: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transform: translateY(-0.5px);
+        }
+    
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(31, 41, 55, 0.9);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+    <div class="card">
+        <div class="header">
+            <div>
+                <h2><span class="icon">💱</span>货币转换</h2>
+                <p class="subtitle">输入金额与汇率，快速查看美元与人民币金额。</p>
+            </div>
+            <span class="badge">本地 · 即时计算</span>
+        </div>
+
+        <div class="input-group">
+            <label>
+                <span>输入金额</span>
+                <span class="hint">例如：36M、1.2B，支持 K / M / B / T / W</span>
+            </label>
+            <div class="input-inner">
+                <input type="text" id="inputVal" placeholder="输入如 36M..." autocomplete="off">
+            </div>
+            <div class="badges">
+                <div class="badge" onclick="addSuffix('K')">K (千)</div>
+                <div class="badge" onclick="addSuffix('M')">M (百万)</div>
+                <div class="badge" onclick="addSuffix('B')">B (十亿)</div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>
+                <span>美元汇率 (USD → CNY)</span>
+                <span class="hint" id="rateHint">默认 7.24，正在尝试获取实时汇率…</span>
+            </label>
+            <div class="input-inner">
+                <input type="number" id="rateVal" value="7.24" step="0.01">
+            </div>
+        </div>
+        
+        <div id="outputWrapper">
+            <div id="outputInner">
+                <div class="result-card usd">
+                    <div class="row">
+                        <span class="res-label">美元 (USD)</span>
+                        <button class="copy-btn" onclick="copyText(rawUSDValue)">📋 复制</button>
+                    </div>
+                    <div class="row">
+                        <span class="res-value" id="resUSD">$ 0</span>
+                    </div>
+                    <div class="row">
+                        <span class="res-sub" id="resUSDText">-</span>
+                    </div>
+                </div>
+        
+                <div class="result-card cny">
+                    <div class="row">
+                        <span class="res-label">人民币 (CNY)</span>
+                        <button class="copy-btn" onclick="copyText(rawCNYValue)">📋 复制</button>
+                    </div>
+                    <div class="row">
+                        <span class="res-value" id="resCNY">¥ 0</span>
+                    </div>
+                    <div class="row">
+                        <span class="res-sub" id="resCNYText">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast">已复制到剪贴板</div>
+
+<script>
+    const inputVal = document.getElementById('inputVal');
+    const rateVal = document.getElementById('rateVal');
+    const outputWrapper = document.getElementById('outputWrapper');
+    const toast = document.getElementById('toast');
+
+    // 显示元素
+    const resUSD = document.getElementById('resUSD');
+    const resUSDText = document.getElementById('resUSDText');
+    const resCNY = document.getElementById('resCNY');
+    const resCNYText = document.getElementById('resCNYText');
+    const rateHint = document.getElementById('rateHint');
+    
+    // 存储原始值用于复制
+    let rawUSDValue = "";
+    let rawCNYValue = "";
+    
+    inputVal.addEventListener('input', calculate);
+    rateVal.addEventListener('input', calculate);
+    
+    function addSuffix(suffix) {
+        let current = inputVal.value.replace(/[a-zA-Z]/g, ''); 
+        if(current === '') return;
+        inputVal.value = current + suffix;
+        inputVal.focus();
+        calculate();
+    }
+    
+    function calculate() {
+        let raw = inputVal.value.trim().toUpperCase();
+        
+        if (!raw) {
+            outputWrapper.classList.remove('open');
+            return;
+        }
+    
+        let multiplier = 1;
+        if (raw.endsWith('K')) multiplier = 1000;
+        else if (raw.endsWith('M')) multiplier = 1000000;
+        else if (raw.endsWith('B')) multiplier = 1000000000;
+        else if (raw.endsWith('T')) multiplier = 1000000000000;
+        else if (raw.includes('W')) multiplier = 10000;
+    
+        let baseNumString = raw.replace(/[KMBTWE,]/g, '');
+        let baseNum = parseFloat(baseNumString);
+    
+        if (isNaN(baseNum)) {
+            outputWrapper.classList.remove('open');
+            return;
+        }
+    
+        // 1. 计算基础数值 (即美元)
+        let finalValue = baseNum * multiplier;
+        
+        // 2. 计算汇率 (即人民币)
+        let rate = parseFloat(rateVal.value) || 0;
+        let cnyValue = finalValue * rate;
+    
+        // 3. 存值
+        rawUSDValue = finalValue.toString();
+        rawCNYValue = cnyValue.toFixed(2);
+        
+        // 展开面板
+        outputWrapper.classList.add('open');
+    
+        // 4. 更新UI - 美元部分
+        resUSD.textContent = "$ " + finalValue.toLocaleString('en-US');
+        resUSDText.textContent = toChineseUnit(finalValue);
+    
+        // 5. 更新UI - 人民币部分
+        resCNY.textContent = "¥ " + cnyValue.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        resCNYText.textContent = toChineseUnit(cnyValue);
+    }
+    
+    function toChineseUnit(num) {
+        if (num < 10000) return "约 " + num.toFixed(0); // 小于一万直接显示
+        if (num >= 100000000) {
+            let yi = num / 100000000;
+            return "约 " + yi.toFixed(2) + " 亿";
+        }
+        if (num >= 10000) {
+            let wan = num / 10000;
+            return "约 " + wan.toFixed(2) + " 万";
+        }
+    }
+    
+    function copyText(text) {
+        if(!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast();
+        });
+    }
+    
+    function showToast() {
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2000);
+    }
+
+    async function fetchLiveRate() {
+        if (!rateHint) return;
+
+        // 优先使用 exchangerate.host，失败再尝试备用接口
+        async function tryExchangerateHost() {
+            const resp = await fetch('https://api.exchangerate.host/latest?base=USD&symbols=CNY');
+            if (!resp.ok) throw new Error('network');
+            const data = await resp.json();
+            const liveRate = data && data.rates && data.rates.CNY;
+            if (!liveRate) throw new Error('no-rate');
+            return liveRate;
+        }
+
+        async function tryErApi() {
+            const resp = await fetch('https://open.er-api.com/v6/latest/USD');
+            if (!resp.ok) throw new Error('network');
+            const data = await resp.json();
+            const liveRate = data && data.rates && data.rates.CNY;
+            if (!liveRate) throw new Error('no-rate');
+            return liveRate;
+        }
+
+        try {
+            rateHint.textContent = '正在获取实时汇率…';
+
+            let liveRate;
+            try {
+                liveRate = await tryExchangerateHost();
+            } catch (_) {
+                // 尝试备用接口
+                liveRate = await tryErApi();
+            }
+
+            rateVal.value = liveRate.toFixed(4);
+            rateHint.textContent = `已使用实时汇率：${liveRate.toFixed(4)}`;
+            if (inputVal.value.trim()) {
+                calculate();
+            }
+        } catch (e) {
+            console.error('获取实时汇率失败', e);
+            rateHint.textContent = '实时汇率获取失败，使用默认汇率 7.24（可手动修改）。';
+        }
+    }
+
+    // 页面加载时获取一次实时汇率
+    fetchLiveRate();
+</script>
+
+</body>
+</html>

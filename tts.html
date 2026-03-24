@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TTS 朗读</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f17;
+        --card: rgba(255, 255, 255, 0.06);
+        --card-2: rgba(255, 255, 255, 0.09);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.65);
+        --border: rgba(255, 255, 255, 0.12);
+        --primary: #7c5cff;
+        --primary-2: #5bdbff;
+        --danger: #ff4d6d;
+        --shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+        --radius: 16px;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f6f7fb;
+          --card: rgba(0, 0, 0, 0.04);
+          --card-2: rgba(0, 0, 0, 0.06);
+          --text: rgba(0, 0, 0, 0.9);
+          --muted: rgba(0, 0, 0, 0.6);
+          --border: rgba(0, 0, 0, 0.12);
+          --shadow: 0 18px 60px rgba(0, 0, 0, 0.12);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+        background: radial-gradient(1000px 600px at 20% 10%, rgba(124, 92, 255, 0.22), transparent 55%),
+          radial-gradient(900px 600px at 85% 35%, rgba(91, 219, 255, 0.18), transparent 50%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 35%),
+          var(--bg);
+        color: var(--text);
+      }
+
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 28px 18px 36px;
+      }
+
+      header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      .title {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0;
+        letter-spacing: 0.2px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .card {
+        background: linear-gradient(180deg, var(--card), transparent 130%);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: clip;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.35fr 0.65fr;
+        gap: 14px;
+        padding: 14px;
+      }
+      @media (max-width: 860px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: linear-gradient(180deg, var(--card-2), transparent 120%);
+        padding: 12px;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0 0 8px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 240px;
+        resize: vertical;
+        padding: 12px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.12);
+        color: var(--text);
+        outline: none;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      @media (prefers-color-scheme: light) {
+        textarea {
+          background: rgba(255, 255, 255, 0.75);
+        }
+      }
+      textarea:focus {
+        border-color: rgba(124, 92, 255, 0.55);
+        box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18);
+      }
+
+      .controls {
+        display: grid;
+        gap: 10px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      @media (max-width: 860px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      select,
+      input[type="range"] {
+        width: 100%;
+      }
+      select {
+        padding: 10px 10px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.12);
+        color: var(--text);
+        outline: none;
+      }
+      @media (prefers-color-scheme: light) {
+        select {
+          background: rgba(255, 255, 255, 0.75);
+        }
+      }
+      select:focus {
+        border-color: rgba(91, 219, 255, 0.5);
+        box-shadow: 0 0 0 3px rgba(91, 219, 255, 0.14);
+      }
+
+      .range {
+        display: grid;
+        gap: 6px;
+      }
+      .range .meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .buttons-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      @media (max-width: 420px) {
+        .buttons,
+        .buttons-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 11px 12px;
+        font-weight: 650;
+        font-size: 14px;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text);
+        transition: transform 0.06s ease, background 0.15s ease, border-color 0.15s ease,
+          opacity 0.15s ease;
+      }
+      button:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .primary {
+        border-color: rgba(124, 92, 255, 0.5);
+        background: linear-gradient(90deg, rgba(124, 92, 255, 0.45), rgba(91, 219, 255, 0.22));
+      }
+      .primary:hover {
+        background: linear-gradient(90deg, rgba(124, 92, 255, 0.58), rgba(91, 219, 255, 0.28));
+      }
+      .danger {
+        border-color: rgba(255, 77, 109, 0.45);
+        background: rgba(255, 77, 109, 0.14);
+      }
+      .danger:hover {
+        background: rgba(255, 77, 109, 0.2);
+      }
+
+      .status {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px dashed var(--border);
+        border-radius: 14px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+        user-select: text;
+      }
+
+      .pill {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .top-right {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+      .kbd {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2px 6px;
+        border-radius: 7px;
+      }
+
+      .footer {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .hint strong {
+        color: var(--text);
+      }
+      a {
+        color: inherit;
+        text-decoration: underline;
+        text-decoration-color: rgba(124, 92, 255, 0.55);
+        text-underline-offset: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="title">
+          <h1>TTS 朗读</h1>
+          <div class="sub">输入内容后点击“播放”即可朗读。支持暂停/继续、停止、语速/音高、发音人（如浏览器提供）。</div>
+        </div>
+        <div class="top-right">
+          <span class="pill" id="supportPill">检测中…</span>
+          <span class="pill">快捷键：<span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> 播放/继续</span>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="grid">
+          <section class="panel">
+            <label for="text">要朗读的内容</label>
+            <textarea
+              id="text"
+              placeholder="例如：你好，欢迎使用文本转语音朗读功能。"
+              autocomplete="off"
+              spellcheck="false"
+            ></textarea>
+          </section>
+
+          <aside class="panel">
+            <div class="controls">
+              <div class="row">
+                <div>
+                  <label for="engine">朗读引擎</label>
+                  <select id="engine" aria-label="朗读引擎">
+                    <option value="travis" selected>云端（tts.travisvn.com · zh-CN-YunyangNeural）</option>
+                    <option value="browser">浏览器内置（speechSynthesis）</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="apiBase">API 地址</label>
+                  <select id="apiBase" aria-label="API 地址">
+                    <option value="https://tts.travisvn.com" selected>https://tts.travisvn.com</option>
+                    <option value="custom">自定义（填在下方）</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="customBaseWrap" style="display:none">
+                <label for="customBase">自定义 API Base（例如 http://localhost:5050）</label>
+                <select id="customBase" aria-label="自定义 API Base">
+                  <option value="http://localhost:5050">http://localhost:5050</option>
+                  <option value="http://127.0.0.1:5050">http://127.0.0.1:5050</option>
+                </select>
+                <div class="hint">提示：如果你自己用 Docker 跑了 `openai-edge-tts`，把地址换成你的服务地址即可。</div>
+              </div>
+
+              <div>
+                <label for="voice">发音人（Voice）</label>
+                <select id="voice" aria-label="发音人">
+                  <option value="">加载中…</option>
+                </select>
+              </div>
+
+              <div class="row">
+                <div class="range">
+                  <div class="meta">
+                    <span>语速</span>
+                    <span id="rateVal">1.0</span>
+                  </div>
+                  <input id="rate" type="range" min="0.6" max="1.6" step="0.1" value="1.0" />
+                </div>
+                <div class="range">
+                  <div class="meta">
+                    <span>音高</span>
+                    <span id="pitchVal">1.0</span>
+                  </div>
+                  <input id="pitch" type="range" min="0.6" max="1.6" step="0.1" value="1.0" />
+                </div>
+              </div>
+
+              <div class="buttons">
+                <button class="primary" id="playBtn">播放</button>
+                <button id="pauseBtn" disabled>暂停</button>
+              </div>
+              <div class="buttons-2">
+                <button id="resumeBtn" disabled>继续</button>
+                <button class="danger" id="stopBtn" disabled>停止</button>
+              </div>
+
+              <div class="status" id="status">状态：未播放</div>
+              <audio id="audio" style="width:100%; display:none; margin-top:10px" controls></audio>
+              <div class="hint" id="engineHint" style="margin-top:8px"></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <div class="footer">
+        说明：此页面使用浏览器内置的 Web Speech API（离线/在线取决于系统语音包）。如果没有可用中文发音人，请在系统里安装中文语音包或换用支持更好的浏览器（通常 Chromium 系列较稳定）。
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        const $ = (id) => document.getElementById(id);
+
+        const textEl = $("text");
+        const engineEl = $("engine");
+        const apiBaseEl = $("apiBase");
+        const customBaseWrap = $("customBaseWrap");
+        const customBaseEl = $("customBase");
+        const voiceEl = $("voice");
+        const rateEl = $("rate");
+        const pitchEl = $("pitch");
+        const rateValEl = $("rateVal");
+        const pitchValEl = $("pitchVal");
+        const playBtn = $("playBtn");
+        const pauseBtn = $("pauseBtn");
+        const resumeBtn = $("resumeBtn");
+        const stopBtn = $("stopBtn");
+        const statusEl = $("status");
+        const supportPill = $("supportPill");
+        const audioEl = $("audio");
+        const engineHintEl = $("engineHint");
+
+        const hasTTS = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
+        const hasFetch = typeof window.fetch === "function";
+
+        let voices = [];
+        let currentUtter = null;
+        let isSpeaking = false; // browser engine only
+        let isFetchingAudio = false;
+        let lastAudioUrl = null;
+
+        const TRAVIS_VOICE = "zh-CN-YunyangNeural";
+
+        const setPill = (ok, text) => {
+          supportPill.textContent = text;
+          supportPill.style.borderColor = ok ? "rgba(91, 219, 255, 0.45)" : "rgba(255, 77, 109, 0.45)";
+          supportPill.style.background = ok ? "rgba(91, 219, 255, 0.12)" : "rgba(255, 77, 109, 0.12)";
+        };
+
+        const setStatus = (s) => {
+          statusEl.textContent = `状态：${s}`;
+        };
+
+        const getEngine = () => engineEl.value;
+        const getApiBase = () => {
+          const base = apiBaseEl.value === "custom" ? customBaseEl.value : apiBaseEl.value;
+          return String(base || "").replace(/\/+$/, "");
+        };
+
+        const cleanupAudioUrl = () => {
+          if (lastAudioUrl) {
+            try {
+              URL.revokeObjectURL(lastAudioUrl);
+            } catch {}
+            lastAudioUrl = null;
+          }
+        };
+
+        const updateButtons = () => {
+          const engine = getEngine();
+
+          if (engine === "travis") {
+            const canUse = hasFetch;
+            const paused = audioEl?.paused === false ? false : audioEl?.paused; // undefined-safe
+            const hasSrc = !!audioEl.src;
+            const playing = hasSrc && !audioEl.paused && !audioEl.ended;
+
+            playBtn.disabled = !canUse || isFetchingAudio;
+            pauseBtn.disabled = !canUse || !playing;
+            resumeBtn.disabled = !canUse || !hasSrc || playing || audioEl.ended;
+            stopBtn.disabled = !canUse || (!hasSrc && !isFetchingAudio);
+          } else {
+            const synth = window.speechSynthesis;
+            const paused = synth?.paused;
+            const speaking = synth?.speaking;
+            playBtn.disabled = !hasTTS;
+            pauseBtn.disabled = !hasTTS || !speaking || paused;
+            resumeBtn.disabled = !hasTTS || !paused;
+            stopBtn.disabled = !hasTTS || (!speaking && !paused);
+          }
+        };
+
+        const preferZhVoiceIndex = () => {
+          if (!voices.length) return -1;
+          const zh = voices
+            .map((v, idx) => ({ v, idx }))
+            .filter(({ v }) => (v.lang || "").toLowerCase().startsWith("zh"));
+          if (zh.length) return zh[0].idx;
+          const any = voices.map((v, idx) => ({ v, idx }));
+          const cnByName = any.find(({ v }) => /chinese|mandarin|zh/i.test(`${v.name} ${v.lang}`));
+          return cnByName ? cnByName.idx : -1;
+        };
+
+        const fillVoices = () => {
+          const engine = getEngine();
+          if (engine === "travis") {
+            voices = [];
+            voiceEl.innerHTML = `<option value="${TRAVIS_VOICE}">${TRAVIS_VOICE}（固定）</option>`;
+            voiceEl.value = TRAVIS_VOICE;
+            voiceEl.disabled = true;
+            pitchEl.disabled = true; // travis speed supported; pitch not guaranteed
+            updateButtons();
+            return;
+          }
+
+          voiceEl.disabled = false;
+          pitchEl.disabled = false;
+
+          if (!hasTTS) {
+            voiceEl.innerHTML = `<option value="">浏览器不支持</option>`;
+            updateButtons();
+            return;
+          }
+
+          voices = window.speechSynthesis.getVoices() || [];
+          if (!voices.length) {
+            voiceEl.innerHTML = `<option value="">未发现可用发音人（稍后再试）</option>`;
+            updateButtons();
+            return;
+          }
+
+          voiceEl.innerHTML = voices
+            .map((v, i) => {
+              const label = `${v.name} (${v.lang || "unknown"})${v.default ? " · 默认" : ""}`;
+              return `<option value="${i}">${label}</option>`;
+            })
+            .join("");
+
+          const idx = preferZhVoiceIndex();
+          if (idx >= 0) voiceEl.value = String(idx);
+
+          updateButtons();
+        };
+
+        const stop = () => {
+          const engine = getEngine();
+          if (engine === "travis") {
+            isFetchingAudio = false;
+            if (audioEl) {
+              try {
+                audioEl.pause();
+                audioEl.currentTime = 0;
+              } catch {}
+              audioEl.removeAttribute("src");
+              audioEl.load();
+              audioEl.style.display = "none";
+            }
+            cleanupAudioUrl();
+            setStatus("已停止");
+            updateButtons();
+            return;
+          }
+
+          if (!hasTTS) return;
+          const synth = window.speechSynthesis;
+          synth.cancel();
+          currentUtter = null;
+          isSpeaking = false;
+          setStatus("已停止");
+          updateButtons();
+        };
+
+        const speakBrowser = () => {
+          if (!hasTTS) return;
+          const content = (textEl.value || "").trim();
+          if (!content) {
+            setStatus("请输入要朗读的内容");
+            return;
+          }
+
+          const synth = window.speechSynthesis;
+          synth.cancel();
+
+          const utter = new SpeechSynthesisUtterance(content);
+          const idx = Number(voiceEl.value);
+          if (!Number.isNaN(idx) && voices[idx]) utter.voice = voices[idx];
+
+          utter.rate = Number(rateEl.value);
+          utter.pitch = Number(pitchEl.value);
+          utter.lang = utter.voice?.lang || "zh-CN";
+
+          utter.onstart = () => {
+            isSpeaking = true;
+            setStatus("朗读中…");
+            updateButtons();
+          };
+          utter.onend = () => {
+            isSpeaking = false;
+            setStatus("已完成");
+            updateButtons();
+          };
+          utter.onpause = () => {
+            setStatus("已暂停");
+            updateButtons();
+          };
+          utter.onresume = () => {
+            setStatus("朗读中…");
+            updateButtons();
+          };
+          utter.onerror = (e) => {
+            isSpeaking = false;
+            setStatus(`发生错误：${e?.error || "unknown"}`);
+            updateButtons();
+          };
+
+          currentUtter = utter;
+          synth.speak(utter);
+          updateButtons();
+        };
+
+        const speakTravis = async () => {
+          if (!hasFetch) return;
+          const content = (textEl.value || "").trim();
+          if (!content) {
+            setStatus("请输入要朗读的内容");
+            return;
+          }
+
+          const base = getApiBase();
+          const url = `${base}/v1/audio/speech`;
+
+          isFetchingAudio = true;
+          updateButtons();
+          setStatus("生成语音中…");
+
+          try {
+            cleanupAudioUrl();
+
+            const body = {
+              model: "tts-1",
+              input: content,
+              voice: TRAVIS_VOICE,
+              response_format: "mp3",
+              speed: Number(rateEl.value),
+            };
+
+            const res = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer your_api_key_here",
+              },
+              body: JSON.stringify(body),
+            });
+
+            if (!res.ok) {
+              const msg = await res.text().catch(() => "");
+              throw new Error(`请求失败（${res.status}）：${msg || res.statusText}`);
+            }
+
+            const blob = await res.blob();
+            const objUrl = URL.createObjectURL(blob);
+            lastAudioUrl = objUrl;
+
+            audioEl.src = objUrl;
+            audioEl.playbackRate = 1; // 音频已由后端按 speed 生成；这里保持 1，避免双重加速
+            audioEl.style.display = "block";
+
+            await audioEl.play();
+            setStatus("朗读中…");
+          } catch (e) {
+            setStatus(`发生错误：${e?.message || "unknown"}`);
+          } finally {
+            isFetchingAudio = false;
+            updateButtons();
+          }
+        };
+
+        const speak = () => {
+          const engine = getEngine();
+          if (engine === "travis") return speakTravis();
+          return speakBrowser();
+        };
+
+        const pause = () => {
+          const engine = getEngine();
+          if (engine === "travis") {
+            try {
+              audioEl.pause();
+              setStatus("已暂停");
+            } catch {}
+            updateButtons();
+            return;
+          }
+
+          if (!hasTTS) return;
+          const synth = window.speechSynthesis;
+          if (synth.speaking && !synth.paused) synth.pause();
+          updateButtons();
+        };
+
+        const resume = () => {
+          const engine = getEngine();
+          if (engine === "travis") {
+            try {
+              audioEl.play();
+              setStatus("朗读中…");
+            } catch {}
+            updateButtons();
+            return;
+          }
+
+          if (!hasTTS) return;
+          const synth = window.speechSynthesis;
+          if (synth.paused) synth.resume();
+          updateButtons();
+        };
+
+        const refreshEngineUI = () => {
+          const engine = getEngine();
+          if (engine === "travis") {
+            setPill(hasFetch, hasFetch ? "云端引擎可用" : "浏览器不支持 fetch");
+            engineHintEl.innerHTML =
+              `当前使用 <strong>tts.travisvn.com</strong> 的 <strong>${TRAVIS_VOICE}</strong>。语速会在“播放”时通过 API 的 <strong>speed</strong> 生效；播放后也可用语速滑块进行微调（影响当前音频播放速度）。`;
+            voiceEl.disabled = true;
+            pitchEl.disabled = true;
+          } else {
+            setPill(hasTTS, hasTTS ? "浏览器 TTS 可用" : "浏览器不支持 TTS");
+            engineHintEl.innerHTML =
+              `当前使用浏览器内置 TTS。部分浏览器/语音可能对语速不敏感；本页面已在朗读中调整语速/音高时自动重启以确保生效。`;
+            voiceEl.disabled = false;
+            pitchEl.disabled = false;
+            audioEl.style.display = "none";
+            cleanupAudioUrl();
+          }
+          fillVoices();
+          updateButtons();
+        };
+
+        rateEl.addEventListener("input", () => {
+          rateValEl.textContent = Number(rateEl.value).toFixed(1);
+          const engine = getEngine();
+          if (engine === "travis") {
+            // 让“语速滑块”对当前播放立即生效（按键/滑块有感）
+            if (audioEl?.src) {
+              // 这里做“微调”：0.6~1.6 映射到 0.75~1.35，避免过度失真
+              const r = Number(rateEl.value);
+              audioEl.playbackRate = Math.min(1.35, Math.max(0.75, r));
+            }
+          } else if (hasTTS) {
+            // WebSpeech 在多数实现里无法“中途改 rate”，这里直接重启让它生效
+            const synth = window.speechSynthesis;
+            if (synth?.speaking && !synth.paused) speakBrowser();
+          }
+        });
+        pitchEl.addEventListener("input", () => (pitchValEl.textContent = Number(pitchEl.value).toFixed(1)));
+        playBtn.addEventListener("click", () => speak());
+        pauseBtn.addEventListener("click", () => pause());
+        resumeBtn.addEventListener("click", () => resume());
+        stopBtn.addEventListener("click", () => stop());
+
+        pitchEl.addEventListener("input", () => {
+          const engine = getEngine();
+          if (engine === "browser" && hasTTS) {
+            const synth = window.speechSynthesis;
+            if (synth?.speaking && !synth.paused) speakBrowser();
+          }
+        });
+
+        engineEl.addEventListener("change", () => {
+          // 切换引擎时停止当前播放
+          stop();
+          refreshEngineUI();
+        });
+
+        apiBaseEl.addEventListener("change", () => {
+          customBaseWrap.style.display = apiBaseEl.value === "custom" ? "block" : "none";
+        });
+
+        window.addEventListener("keydown", (e) => {
+          if (e.ctrlKey && e.key === "Enter") {
+            e.preventDefault();
+            const engine = getEngine();
+            if (engine === "travis") {
+              if (audioEl?.src && audioEl.paused && !audioEl.ended) resume();
+              else speak();
+            } else {
+              const synth = window.speechSynthesis;
+              if (hasTTS && synth?.paused) resume();
+              else speak();
+            }
+          }
+        });
+
+        window.addEventListener("beforeunload", () => {
+          try {
+            window.speechSynthesis?.cancel();
+          } catch {}
+          try {
+            cleanupAudioUrl();
+          } catch {}
+        });
+
+        if (hasTTS) {
+          window.speechSynthesis.onvoiceschanged = () => fillVoices();
+        }
+        apiBaseEl.dispatchEvent(new Event("change"));
+
+        // 监听音频状态
+        audioEl.addEventListener("ended", () => {
+          setStatus("已完成");
+          updateButtons();
+        });
+        audioEl.addEventListener("pause", () => {
+          if (audioEl.currentTime > 0 && !audioEl.ended) setStatus("已暂停");
+          updateButtons();
+        });
+        audioEl.addEventListener("play", () => {
+          setStatus("朗读中…");
+          updateButtons();
+        });
+
+        refreshEngineUI();
+        setStatus(getEngine() === "travis" ? "未播放（云端）" : hasTTS ? "未播放（浏览器）" : "当前浏览器不支持 TTS");
+      })();
+    </script>
+  </body>
+</html>

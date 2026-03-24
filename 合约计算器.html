@@ -1,0 +1,388 @@
+<html lang="zh-CN" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">简约加密货币合约计算器</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17" vid="5"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" vid="6">
+    <style vid="7">
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-[#F4F4F5] text-slate-900 w-screen h-screen flex flex-col items-center justify-center p-6 antialiased" vid="8">
+
+    
+    <div class="w-full max-w-[960px] flex items-center justify-between mb-8 px-2" vid="9">
+        <div class="flex items-center gap-2" vid="10">
+            <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center" vid="11">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vid="12">
+                    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" vid="13"></path>
+                    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" vid="14"></path>
+                    <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" vid="15"></path>
+                </svg>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-slate-900" vid="16">TradeCalc</h1>
+        </div>
+        <div class="flex items-center gap-4 text-sm font-medium text-slate-500" vid="17">
+            <button class="hover:text-slate-900 transition-colors" vid="18">现货</button>
+            <button class="text-slate-900 font-semibold" vid="19">合约</button>
+            <button class="hover:text-slate-900 transition-colors" vid="20">期权</button>
+        </div>
+    </div>
+
+    
+    <div class="w-full max-w-[960px] bg-white rounded-[24px] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] border border-slate-200/60 flex flex-col md:flex-row overflow-hidden" vid="21">
+        
+        
+        <div class="w-full md:w-[55%] p-8 md:p-10 flex flex-col" vid="22">
+            
+            <div class="mb-8 flex items-center justify-between" vid="23">
+                <h2 class="text-lg font-semibold text-slate-800" vid="24">仓位详情</h2>
+                <div class="flex items-center gap-2 text-sm text-slate-500" vid="25">
+                </div>
+            </div>
+
+            
+            <div class="flex bg-slate-100/80 p-1.5 rounded-xl mb-8" vid="27">
+                <button id="btnLong" class="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg bg-white shadow-sm text-emerald-600 border border-slate-200/50 transition-all" vid="28">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vid="29">
+                        <path d="m18 15-6-6-6 6" vid="30"></path>
+                    </svg>
+                    做多
+                </button>
+                <button id="btnShort" class="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg text-slate-500 hover:text-slate-700 transition-all" vid="31">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vid="32">
+                        <path d="m6 9 6 6 6-6" vid="33"></path>
+                    </svg>
+                    做空
+                </button>
+            </div>
+
+            <div class="flex flex-col gap-6" vid="34">
+                
+                <div class="flex flex-col sm:flex-row gap-6" vid="35">
+                    <div class="flex-1" vid="36">
+                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="37">杠杆</label>
+                        <div class="relative" vid="38">
+                            <input id="inputLeverage" type="number" value="" min="1" max="125" step="1" placeholder="请输入杠杆" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-12 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="39">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="40">x</span>
+                        </div>
+                    </div>
+                    <div class="flex-1" vid="41">
+                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="42">保证金</label>
+                        <div class="relative" vid="43">
+                            <input id="inputMargin" type="text" value="" inputmode="decimal" placeholder="请输入保证金" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-16 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="44">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="45">USDT</span>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="flex flex-col sm:flex-row gap-6" vid="46">
+                    <div class="flex-1" vid="47">
+                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="48">开仓价</label>
+                        <div class="relative" vid="49">
+                            <input id="inputEntry" type="text" value="" inputmode="decimal" placeholder="请输入开仓价" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-16 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="50">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="51">USDT</span>
+                        </div>
+                    </div>
+                    <div class="flex-1" vid="52">
+                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="53">平仓价</label>
+                        <div class="relative" vid="54">
+                            <input id="inputExit" type="text" value="" inputmode="decimal" placeholder="请输入平仓价" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-16 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="55">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="56">USDT</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-8 border-t border-slate-100 flex items-center justify-between" vid="57">
+                <p class="text-sm text-slate-500" vid="58">仓位数量：<span id="positionSize" class="font-semibold text-slate-700" vid="59">0.0000 BTC</span></p>
+                <button id="btnClear" class="text-sm font-semibold text-slate-900 hover:text-slate-600 transition-colors" vid="60">清空</button>
+            </div>
+        </div>
+
+        
+        <div class="w-full md:w-[45%] bg-[#F8FAFC] p-8 md:p-10 flex flex-col justify-between border-l border-slate-100" vid="61">
+            
+            <div vid="62">
+                <h2 class="text-lg font-semibold text-slate-800 mb-8" vid="63">计算结果</h2>
+
+                
+                <div class="mb-10" vid="64">
+                    <p class="text-[13px] font-semibold text-slate-500 mb-3 uppercase tracking-wide" vid="65">盈亏</p>
+                    <div class="flex items-end gap-3 flex-wrap" vid="66">
+                        <h3 id="pnlValue" class="text-5xl lg:text-6xl font-bold tracking-tight text-emerald-500 leading-none" vid="67">+$0.00</h3>
+                        <div class="flex items-center gap-1 mb-1" vid="68">
+                            <span id="roiBadge" class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold bg-emerald-100 text-emerald-700 transition-colors" vid="69">
+                                <span id="roiValue">+0.00%</span> 收益率
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-6" vid="70">
+                    <div class="flex items-center justify-between mb-2" vid="71">
+                        <p class="text-[13px] font-semibold text-slate-500 uppercase tracking-wide" vid="72">强平价格</p>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400" vid="73">
+                            <circle cx="12" cy="12" r="10" vid="74"></circle><path d="M12 16v-4" vid="75"></path><path d="M12 8h.01" vid="76"></path>
+                        </svg>
+                    </div>
+                    <p id="liqPrice" class="text-3xl font-bold text-slate-900 tracking-tight" vid="77">$0.00</p>
+                </div>
+            </div>
+
+            
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm" vid="78">
+                <ul class="flex flex-col gap-4" vid="79">
+                    <li class="flex items-center justify-between text-sm" vid="80">
+                        <span class="text-slate-500 font-medium" vid="81">初始保证金</span>
+                        <span id="summaryMargin" class="font-semibold text-slate-900" vid="82">$0.00</span>
+                    </li>
+                    <li class="flex items-center justify-between text-sm" vid="83">
+                        <span class="text-slate-500 font-medium" vid="84">仓位价值</span>
+                        <span id="summaryPosition" class="font-semibold text-slate-900" vid="85">$0.00</span>
+                    </li>
+                    <li class="flex items-center justify-between text-sm" vid="86">
+                        <span class="text-slate-500 font-medium" vid="87">方向</span>
+                        <span id="summaryDirection" class="font-semibold text-emerald-600" vid="88">做多</span>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    
+    <p class="mt-8 text-sm text-slate-500 text-center max-w-md" vid="89">
+    </p>
+
+    <script>
+        (function () {
+            const inputLeverage = document.getElementById('inputLeverage');
+            const inputMargin = document.getElementById('inputMargin');
+            const inputEntry = document.getElementById('inputEntry');
+            const inputExit = document.getElementById('inputExit');
+            const btnLong = document.getElementById('btnLong');
+            const btnShort = document.getElementById('btnShort');
+            const btnClear = document.getElementById('btnClear');
+
+            const positionSizeEl = document.getElementById('positionSize');
+            const pnlValueEl = document.getElementById('pnlValue');
+            const roiValueEl = document.getElementById('roiValue');
+            const liqPriceEl = document.getElementById('liqPrice');
+            const roiBadgeEl = document.getElementById('roiBadge');
+            const summaryMarginEl = document.getElementById('summaryMargin');
+            const summaryPositionEl = document.getElementById('summaryPosition');
+            const summaryDirectionEl = document.getElementById('summaryDirection');
+
+            let direction = 'long';
+            const MIN_LEVERAGE = 1;
+            const MAX_LEVERAGE = 125;
+
+            function parseNumber(value) {
+                if (!value) return NaN;
+                const cleaned = String(value)
+                    .replace(/,/g, '')
+                    .replace(/[^\d.-]/g, '')
+                    .trim();
+                return cleaned ? parseFloat(cleaned) : NaN;
+            }
+
+            function formatUSD(num, minFraction = 2, maxFraction = 2) {
+                if (!isFinite(num)) return '$0.00';
+                return num.toLocaleString('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: minFraction,
+                    maximumFractionDigits: maxFraction
+                });
+            }
+
+            function formatNumber(num, digits = 4) {
+                if (!isFinite(num)) return '0';
+                return num.toLocaleString('en-US', {
+                    minimumFractionDigits: digits,
+                    maximumFractionDigits: digits
+                });
+            }
+
+            function formatInputNumber(num, digits = 0) {
+                if (!isFinite(num)) return '';
+                return num.toLocaleString('en-US', {
+                    minimumFractionDigits: digits,
+                    maximumFractionDigits: digits
+                });
+            }
+
+            function formatSignedUSD(num) {
+                return (num >= 0 ? '+' : '-') + formatUSD(Math.abs(num));
+            }
+
+            function formatSignedPercent(num) {
+                return (num >= 0 ? '+' : '-') + Math.abs(num).toFixed(2) + '%';
+            }
+
+            function clampLeverage(value) {
+                if (!isFinite(value)) return NaN;
+                return Math.min(MAX_LEVERAGE, Math.max(MIN_LEVERAGE, value));
+            }
+
+            function updateResultTone(isPositive) {
+                pnlValueEl.classList.toggle('text-emerald-500', isPositive);
+                pnlValueEl.classList.toggle('text-rose-500', !isPositive);
+                roiBadgeEl.classList.toggle('bg-emerald-100', isPositive);
+                roiBadgeEl.classList.toggle('text-emerald-700', isPositive);
+                roiBadgeEl.classList.toggle('bg-rose-100', !isPositive);
+                roiBadgeEl.classList.toggle('text-rose-700', !isPositive);
+            }
+
+            function resetOutputs() {
+                positionSizeEl.textContent = '0.0000 BTC';
+                pnlValueEl.textContent = '+$0.00';
+                roiValueEl.textContent = '+0.00%';
+                liqPriceEl.textContent = '$0.00';
+                summaryMarginEl.textContent = '$0.00';
+                summaryPositionEl.textContent = '$0.00';
+                updateResultTone(true);
+            }
+
+            function normalizeLeverageInput() {
+                const leverage = clampLeverage(parseFloat(inputLeverage.value));
+                inputLeverage.value = isFinite(leverage) ? String(Math.round(leverage)) : '';
+            }
+
+            function normalizePriceInput(input) {
+                const value = parseNumber(input.value);
+                input.value = isFinite(value) && value > 0 ? formatInputNumber(value, 0) : '';
+            }
+
+            function updateDirectionButtons() {
+                const isLong = direction === 'long';
+
+                btnLong.classList.toggle('font-semibold', isLong);
+                btnLong.classList.toggle('font-medium', !isLong);
+                btnLong.classList.toggle('text-emerald-600', isLong);
+                btnLong.classList.toggle('text-slate-500', !isLong);
+                btnLong.classList.toggle('bg-white', isLong);
+                btnLong.classList.toggle('shadow-sm', isLong);
+                btnLong.classList.toggle('border', isLong);
+
+                btnShort.classList.toggle('font-semibold', !isLong);
+                btnShort.classList.toggle('font-medium', isLong);
+                btnShort.classList.toggle('text-emerald-600', !isLong);
+                btnShort.classList.toggle('text-slate-500', isLong);
+                btnShort.classList.toggle('bg-white', !isLong);
+                btnShort.classList.toggle('shadow-sm', !isLong);
+                btnShort.classList.toggle('border', !isLong);
+
+                summaryDirectionEl.textContent = isLong ? '做多' : '做空';
+                summaryDirectionEl.classList.toggle('text-emerald-600', isLong);
+                summaryDirectionEl.classList.toggle('text-rose-600', !isLong);
+            }
+
+            function recalc() {
+                const leverage = clampLeverage(parseFloat(inputLeverage.value));
+                const margin = parseNumber(inputMargin.value);
+                const entry = parseNumber(inputEntry.value);
+                const exit = parseNumber(inputExit.value);
+
+                if (!isFinite(leverage) || leverage <= 0 ||
+                    !isFinite(margin) || margin <= 0 ||
+                    !isFinite(entry) || entry <= 0 ||
+                    !isFinite(exit) || exit <= 0) {
+                    resetOutputs();
+                    return;
+                }
+
+                const positionValue = margin * leverage;
+                const size = positionValue / entry;
+
+                let pnlPerUnit;
+                if (direction === 'long') {
+                    pnlPerUnit = exit - entry;
+                } else {
+                    pnlPerUnit = entry - exit;
+                }
+
+                const pnl = pnlPerUnit * size;
+                const roi = (pnl / margin) * 100;
+
+                let liq;
+                if (direction === 'long') {
+                    liq = entry * (1 - 1 / leverage);
+                } else {
+                    liq = entry * (1 + 1 / leverage);
+                }
+
+                pnlValueEl.textContent = formatSignedUSD(pnl);
+                roiValueEl.textContent = formatSignedPercent(roi);
+                updateResultTone(pnl >= 0);
+
+                liqPriceEl.textContent = formatUSD(liq);
+                positionSizeEl.textContent = formatNumber(size, 4) + ' BTC';
+                summaryMarginEl.textContent = formatUSD(margin);
+                summaryPositionEl.textContent = formatUSD(positionValue);
+            }
+
+            function clearAll() {
+                inputLeverage.value = '';
+                inputMargin.value = '';
+                inputEntry.value = '';
+                inputExit.value = '';
+                direction = 'long';
+                updateDirectionButtons();
+                resetOutputs();
+            }
+
+            btnLong.addEventListener('click', function () {
+                direction = 'long';
+                updateDirectionButtons();
+                recalc();
+            });
+
+            btnShort.addEventListener('click', function () {
+                direction = 'short';
+                updateDirectionButtons();
+                recalc();
+            });
+
+            btnClear.addEventListener('click', function () {
+                clearAll();
+            });
+
+            inputLeverage.addEventListener('input', recalc);
+            inputLeverage.addEventListener('blur', function () {
+                normalizeLeverageInput();
+                recalc();
+            });
+
+            [inputMargin, inputEntry, inputExit].forEach(function (el) {
+                el.addEventListener('input', recalc);
+                el.addEventListener('focus', function () {
+                    const value = parseNumber(el.value);
+                    el.value = isFinite(value) ? String(value) : '';
+                });
+                el.addEventListener('blur', function () {
+                    normalizePriceInput(el);
+                    recalc();
+                });
+            });
+
+            updateDirectionButtons();
+            recalc();
+        })();
+    </script>
+
+</body></html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>倒计时工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 32px 16px;
+            background: #f5f7fb;
+            color: #111827;
+        }
+    
+        .container {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 20px 22px 18px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+            max-width: 520px;
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+        }
+    
+        h1 {
+            color: #111827;
+            margin-bottom: 14px;
+            font-size: 22px;
+            letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h1 span.icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            background: #fef3c7;
+            color: #f59e0b;
+            font-size: 16px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 18px;
+        }
+    
+        .display-container {
+            margin: 18px 0 14px;
+            position: relative;
+        }
+    
+        .display {
+            font-size: 40px;
+            font-weight: 600;
+            color: #111827;
+            font-family: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+            cursor: text;
+            padding: 8px 10px;
+            border-radius: 10px;
+            transition: all 0.15s;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+    
+        .display:hover:not(.running) {
+            background: #ffffff;
+        }
+    
+        .time-input-inline {
+            font-size: 40px;
+            font-weight: 600;
+            color: #111827;
+            font-family: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+            background: #f9fafb;
+        }
+    
+        .time-input-inline:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: #ffffff;
+            box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35);
+        }
+    
+        .hint {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 8px;
+        }
+    
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+    
+        button {
+            padding: 8px 18px;
+            font-size: 14px;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+            font-weight: 500;
+        }
+    
+        .btn-start {
+            background: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+        }
+    
+        .btn-start:hover {
+            background: #1d4ed8;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+            transform: translateY(-0.5px);
+        }
+    
+        .btn-pause {
+            background: #f59e0b;
+            color: #ffffff;
+        }
+    
+        .btn-pause:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+        }
+    
+        .btn-reset {
+            background: #ef4444;
+            color: #ffffff;
+        }
+    
+        .btn-reset:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+    
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+    
+        .finished {
+            color: #ef4444;
+            animation: blink 1s infinite;
+        }
+    
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.5; }
+        }
+    
+        .message {
+            font-size: 16px;
+            color: #ef4444;
+            margin-top: 18px;
+            font-weight: bold;
+            display: none;
+        }
+    
+        .message.show {
+            display: block;
+            animation: bounce 0.5s;
+        }
+    
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>倒计时</h1>
+        
+        <div class="display-container">
+            <input 
+                type="text" 
+                id="timeInput" 
+                class="time-input-inline" 
+                placeholder="000000"
+                maxlength="6"
+            >
+            <div class="display hidden" id="display">00:00:00</div>
+            <div class="hint">直接输入数字 (例如: 90 = 90秒, 130 = 1分30秒, 010000 = 1小时)</div>
+        </div>
+    
+        <div class="buttons">
+            <button class="btn-start" id="startBtn">开始</button>
+            <button class="btn-pause" id="pauseBtn" disabled>暂停</button>
+            <button class="btn-reset" id="resetBtn">重置</button>
+        </div>
+    
+        <div class="message" id="message">⏰ 时间到!</div>
+    </div>
+    
+    <script>
+        let totalSeconds = 0;
+        let endTime = null; // 结束时间戳
+        let intervalId = null;
+        let isRunning = false;
+        let hasFinished = false;
+    
+        const timeInput = document.getElementById('timeInput');
+        const display = document.getElementById('display');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const message = document.getElementById('message');
+    
+        // 创建提示音
+        function playBeep() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+    
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                }, i * 600);
+            }
+        }
+    
+        // 解析时间输入 - 纯数字格式
+        function parseTimeInput(input) {
+            input = input.trim();
+            
+            // 只保留数字
+            const numbers = input.replace(/\D/g, '');
+            
+            if (numbers.length === 0) return 0;
+            
+            const num = parseInt(numbers);
+            
+            // 根据输入长度判断格式
+            if (numbers.length <= 2) {
+                // 1-2位: 直接当秒数 (90 = 90秒)
+                return num;
+            } else if (numbers.length <= 4) {
+                // 3-4位: 后两位是秒,前面是分钟 (130 = 1分30秒, 1234 = 12分34秒)
+                const minutes = Math.floor(num / 100);
+                const seconds = num % 100;
+                return minutes * 60 + seconds;
+            } else {
+                // 5-6位: HHMMSS格式 (010000 = 1小时, 123456 = 12小时34分56秒)
+                const paddedNum = numbers.padStart(6, '0');
+                const hours = parseInt(paddedNum.substring(0, 2));
+                const minutes = parseInt(paddedNum.substring(2, 4));
+                const seconds = parseInt(paddedNum.substring(4, 6));
+                return hours * 3600 + minutes * 60 + seconds;
+            }
+        }
+    
+        // 格式化时间显示
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+    
+            return String(hours).padStart(2, '0') + ':' +
+                   String(minutes).padStart(2, '0') + ':' +
+                   String(secs).padStart(2, '0');
+        }
+    
+        // 更新显示 - 基于结束时间计算剩余时间
+        function updateDisplay() {
+            if (!isRunning || !endTime) return;
+    
+            const now = Date.now();
+            const remainingMs = endTime - now;
+            const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+    
+            display.textContent = formatTime(remainingSeconds);
+    
+            // 检查是否完成
+            if (remainingSeconds <= 0 && !hasFinished) {
+                hasFinished = true;
+                clearInterval(intervalId);
+                isRunning = false;
+                startBtn.textContent = '开始';
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                display.classList.add('finished');
+                message.classList.add('show');
+                playBeep();
+                
+                // 更新页面标题提醒
+                document.title = '⏰ 时间到! - 倒计时工具';
+            }
+        }
+    
+        // 只允许输入数字
+        timeInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+    
+        function startTimer() {
+            if (!isRunning) {
+                // 如果是首次启动,计算结束时间
+                if (!endTime) {
+                    totalSeconds = parseTimeInput(timeInput.value);
+                    
+                    if (totalSeconds === 0) {
+                        alert('请输入倒计时时间!');
+                        return;
+                    }
+                    
+                    endTime = Date.now() + (totalSeconds * 1000);
+                }
+    
+                isRunning = true;
+                hasFinished = false;
+                startBtn.textContent = '运行中';
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                timeInput.classList.add('hidden');
+                display.classList.remove('hidden');
+                message.classList.remove('show');
+                display.classList.remove('finished');
+                document.title = '倒计时工具';
+    
+                // 立即更新一次
+                updateDisplay();
+    
+                // 使用较短的间隔以保持精确
+                intervalId = setInterval(updateDisplay, 100);
+            }
+        }
+    
+        function pauseTimer() {
+            if (isRunning) {
+                clearInterval(intervalId);
+                
+                // 计算剩余时间
+                const now = Date.now();
+                const remainingMs = endTime - now;
+                const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+                
+                // 保存剩余秒数,下次继续时使用
+                totalSeconds = remainingSeconds;
+                endTime = null;
+                
+                isRunning = false;
+                startBtn.textContent = '继续';
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+            }
+        }
+    
+        function resetTimer() {
+            clearInterval(intervalId);
+            isRunning = false;
+            endTime = null;
+            totalSeconds = 0;
+            hasFinished = false;
+            startBtn.textContent = '开始';
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            message.classList.remove('show');
+            display.classList.remove('finished');
+            display.classList.add('hidden');
+            timeInput.classList.remove('hidden');
+            timeInput.value = '';
+            timeInput.focus();
+            document.title = '倒计时工具';
+        }
+    
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resetBtn.addEventListener('click', resetTimer);
+    
+        // 回车键开始
+        timeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                startTimer();
+            }
+        });
+    
+        // 页面可见性变化时,确保计时器继续运行
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && isRunning) {
+                // 页面重新可见时,立即更新显示
+                updateDisplay();
+            }
+        });
+    
+        // 页面加载时聚焦输入框
+        timeInput.focus();
+    </script>
+</body>
+</html>

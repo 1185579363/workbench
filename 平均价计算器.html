@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>平均价计算器</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --panel: rgba(255, 252, 247, 0.92);
+      --card: #fffdf9;
+      --text: #2a211b;
+      --muted: #6a5a4f;
+      --line: rgba(110, 86, 69, 0.18);
+      --accent: #b85c38;
+      --accent-dark: #8f4326;
+      --accent-soft: rgba(184, 92, 56, 0.12);
+      --danger: #a33c30;
+      --shadow: 0 18px 45px rgba(82, 53, 37, 0.12);
+      --radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      position: relative;
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(184, 92, 56, 0.12), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(72, 124, 110, 0.14), transparent 30%),
+        linear-gradient(160deg, #f8f3eb 0%, #efe5d8 100%);
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      filter: blur(18px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.55;
+      animation: drift 18s ease-in-out infinite;
+    }
+
+    body::before {
+      top: -90px;
+      right: -70px;
+      background: radial-gradient(circle, rgba(184, 92, 56, 0.24), rgba(184, 92, 56, 0));
+    }
+
+    body::after {
+      left: -110px;
+      bottom: 40px;
+      background: radial-gradient(circle, rgba(72, 124, 110, 0.2), rgba(72, 124, 110, 0));
+      animation-delay: -7s;
+    }
+
+    .particle-field {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--size, 18px);
+      height: var(--size, 18px);
+      border-radius: 50%;
+      opacity: var(--opacity, 0.34);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.34) 34%, rgba(255, 255, 255, 0) 68%),
+        radial-gradient(circle, var(--tint, rgba(184, 92, 56, 0.24)), rgba(184, 92, 56, 0));
+      box-shadow:
+        0 0 22px rgba(255, 255, 255, 0.18),
+        0 0 34px rgba(184, 92, 56, 0.08);
+      transform: translate3d(0, 0, 0);
+      will-change: transform, opacity;
+      filter: blur(0.2px);
+    }
+
+    .app {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(184, 92, 56, 0.6), transparent);
+      opacity: 0.8;
+    }
+
+    .panel {
+      padding: 28px;
+    }
+
+    .eyebrow {
+      margin: 8px 0 0;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      font-size: 13px;
+    }
+
+    .title-stack {
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .title-mark {
+      position: relative;
+      width: 54px;
+      height: 54px;
+      flex: 0 0 auto;
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0) 38%),
+        linear-gradient(160deg, rgba(255, 250, 246, 0.96), rgba(245, 232, 224, 0.96));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 16px 34px rgba(136, 70, 44, 0.16);
+      overflow: hidden;
+      isolation: isolate;
+      border: 1px solid rgba(184, 92, 56, 0.14);
+    }
+
+    .title-mark::before,
+    .title-mark::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+    }
+
+    .title-mark::before {
+      inset: 8px;
+      background:
+        linear-gradient(rgba(184, 92, 56, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184, 92, 56, 0.08) 1px, transparent 1px);
+      background-size: 100% 10px, 10px 100%;
+      border-radius: 12px;
+      opacity: 0.9;
+    }
+
+    .title-mark::after {
+      inset: 7px;
+      border-radius: 14px;
+      border: 1px solid rgba(184, 92, 56, 0.12);
+      opacity: 0.65;
+    }
+
+    .title-bars {
+      position: absolute;
+      left: 11px;
+      right: 11px;
+      bottom: 10px;
+      height: 24px;
+      display: flex;
+      align-items: end;
+      gap: 5px;
+    }
+
+    .title-bars span {
+      width: 6px;
+      border-radius: 999px 999px 4px 4px;
+      background: linear-gradient(180deg, rgba(212, 123, 85, 0.95), rgba(184, 92, 56, 0.52));
+      box-shadow: 0 8px 16px rgba(184, 92, 56, 0.12);
+      animation: titleBars 3.1s ease-in-out infinite;
+    }
+
+    .title-bars span:nth-child(1) { height: 10px; animation-delay: -0.2s; }
+    .title-bars span:nth-child(2) { height: 16px; animation-delay: -0.8s; }
+    .title-bars span:nth-child(3) { height: 13px; animation-delay: -1.1s; }
+    .title-bars span:nth-child(4) { height: 20px; animation-delay: -1.6s; }
+
+    .title-trend {
+      position: absolute;
+      inset: 0;
+    }
+
+    .title-seg {
+      position: absolute;
+      height: 2.5px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(150, 68, 39, 0.88), rgba(216, 134, 98, 0.96));
+      box-shadow: 0 0 14px rgba(184, 92, 56, 0.12);
+      transform-origin: left center;
+    }
+
+    .title-seg.seg-1 {
+      left: 13px;
+      top: 28px;
+      width: 13px;
+      transform: rotate(-16deg);
+    }
+
+    .title-seg.seg-2 {
+      left: 25px;
+      top: 24px;
+      width: 11px;
+      transform: rotate(22deg);
+    }
+
+    .title-seg.seg-3 {
+      left: 35px;
+      top: 20px;
+      width: 8px;
+      transform: rotate(-26deg);
+    }
+
+    .title-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 250, 246, 1), rgba(230, 148, 109, 0.95));
+      box-shadow:
+        0 0 0 4px rgba(184, 92, 56, 0.14),
+        0 0 16px rgba(184, 92, 56, 0.22);
+      animation: titleDotMove 3.8s ease-in-out infinite;
+    }
+
+    .subtitle {
+      margin: 14px 0 0;
+      max-width: 620px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .topbar-copy {
+      position: relative;
+    }
+
+    .topbar-copy::after {
+      content: "";
+      display: block;
+      width: 82px;
+      height: 3px;
+      margin-top: 18px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(184, 92, 56, 0.9), rgba(184, 92, 56, 0.18));
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 26px;
+    }
+
+    .topbar-decor {
+      position: relative;
+      width: 210px;
+      height: 150px;
+      flex: 0 0 auto;
+      margin-top: 6px;
+      opacity: 0.95;
+    }
+
+    .topbar-decor::before {
+      content: "";
+      position: absolute;
+      inset: 18px 14px auto auto;
+      width: 122px;
+      height: 122px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(184, 92, 56, 0.12), rgba(184, 92, 56, 0));
+      filter: blur(10px);
+    }
+
+    .decor-orbit {
+      position: absolute;
+      right: 18px;
+      top: 4px;
+      width: 132px;
+      height: 132px;
+      border-radius: 50%;
+      border: 1px solid rgba(184, 92, 56, 0.18);
+      animation: spinMark 18s linear infinite;
+    }
+
+    .decor-orbit::before,
+    .decor-orbit::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(180deg, rgba(202, 109, 71, 0.95), rgba(143, 67, 38, 0.85));
+      box-shadow: 0 0 18px rgba(184, 92, 56, 0.18);
+    }
+
+    .decor-orbit::before {
+      width: 10px;
+      height: 10px;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .decor-orbit::after {
+      width: 7px;
+      height: 7px;
+      bottom: 20px;
+      right: 2px;
+      background: rgba(255, 248, 243, 0.92);
+    }
+
+    .decor-grid {
+      position: absolute;
+      right: 0;
+      bottom: 4px;
+      width: 168px;
+      height: 82px;
+      border-radius: 20px;
+      background:
+        linear-gradient(rgba(184, 92, 56, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184, 92, 56, 0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255, 253, 249, 0.78), rgba(255, 249, 243, 0.48));
+      background-size: 100% 20px, 24px 100%, 100% 100%;
+      border: 1px solid rgba(184, 92, 56, 0.14);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      overflow: hidden;
+    }
+
+    .decor-bars {
+      position: absolute;
+      inset: auto 16px 16px 16px;
+      display: flex;
+      align-items: end;
+      gap: 8px;
+      height: 44px;
+    }
+
+    .decor-bars span {
+      width: 10px;
+      border-radius: 999px 999px 4px 4px;
+      background: linear-gradient(180deg, rgba(202, 109, 71, 0.96), rgba(184, 92, 56, 0.42));
+      box-shadow: 0 8px 16px rgba(184, 92, 56, 0.12);
+      animation: barsFloat 3.4s ease-in-out infinite;
+    }
+
+    .decor-bars span:nth-child(1) { height: 16px; animation-delay: -0.4s; }
+    .decor-bars span:nth-child(2) { height: 28px; animation-delay: -1.1s; }
+    .decor-bars span:nth-child(3) { height: 22px; animation-delay: -0.8s; }
+    .decor-bars span:nth-child(4) { height: 36px; animation-delay: -1.6s; }
+    .decor-bars span:nth-child(5) { height: 26px; animation-delay: -1.2s; }
+    .decor-bars span:nth-child(6) { height: 40px; animation-delay: -2s; }
+
+    .decor-spark {
+      position: absolute;
+      left: 16px;
+      top: 14px;
+      width: 62px;
+      height: 18px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(184, 92, 56, 0), rgba(184, 92, 56, 0.22), rgba(184, 92, 56, 0));
+      animation: sweepDecor 3.6s ease-in-out infinite;
+    }
+
+    .live-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .live-pill {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(110, 86, 69, 0.14);
+      background: rgba(255, 253, 249, 0.72);
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    }
+
+    .live-pill::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #d27e57, #b85c38);
+      box-shadow: 0 0 0 0 rgba(184, 92, 56, 0.4);
+      animation: pulseDot 2.6s ease-out infinite;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      position: relative;
+      overflow: hidden;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 25%, rgba(255, 255, 255, 0.35) 50%, transparent 75%);
+      transform: translateX(-130%);
+      transition: transform 0.45s ease;
+      pointer-events: none;
+    }
+
+    button:hover::after {
+      transform: translateX(130%);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ca6d47, #b85c38);
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(184, 92, 56, 0.22);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #bf633d, #984929);
+    }
+
+    .btn-secondary {
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .summary-card {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      overflow: hidden;
+      transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    }
+
+    .summary-card::before {
+      content: "";
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      right: -30px;
+      top: -48px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(184, 92, 56, 0.14), rgba(184, 92, 56, 0));
+      transition: transform 0.3s ease;
+    }
+
+    .summary-card span {
+      position: relative;
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .summary-card strong {
+      position: relative;
+      display: block;
+      font-size: clamp(24px, 3vw, 34px);
+      font-weight: 800;
+    }
+
+    .summary-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(184, 92, 56, 0.28);
+      box-shadow: 0 16px 34px rgba(82, 53, 37, 0.1);
+    }
+
+    .summary-card:hover::before {
+      transform: scale(1.08);
+    }
+
+    .workspace {
+      position: relative;
+      background: var(--card);
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .workspace::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(184, 92, 56, 0.75), rgba(184, 92, 56, 0));
+      opacity: 0.7;
+    }
+
+    .workspace-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .workspace-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .workspace-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .workspace-title h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .tag {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-size: 13px;
+      font-weight: 700;
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+
+    .workspace-note {
+      padding: 18px 20px 0;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    input:focus {
+      border-color: rgba(184, 92, 56, 0.5);
+      box-shadow: 0 0 0 4px rgba(184, 92, 56, 0.08);
+    }
+
+    .table-wrap {
+      padding: 18px 20px 20px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+
+    th,
+    td {
+      padding: 14px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    tbody tr {
+      transition: background 0.18s ease, transform 0.18s ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(184, 92, 56, 0.045);
+    }
+
+    tbody tr.row-appear {
+      animation: rowEnter 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      animation-delay: var(--row-delay, 0ms);
+    }
+
+    td small {
+      color: var(--muted);
+    }
+
+    .money {
+      font-weight: 700;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .icon-btn.danger {
+      color: var(--danger);
+      border-color: rgba(163, 60, 48, 0.18);
+      background: rgba(163, 60, 48, 0.06);
+    }
+
+    .icon-btn.add {
+      color: var(--accent-dark);
+      border-color: rgba(184, 92, 56, 0.2);
+      background: rgba(184, 92, 56, 0.08);
+      font-weight: 800;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .help {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .storage-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+      padding: 18px 20px 0;
+    }
+
+    .storage-field {
+      min-width: 0;
+    }
+
+    .storage-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.04em;
+    }
+
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 14px;
+      outline: none;
+      font: inherit;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    select:focus {
+      border-color: rgba(184, 92, 56, 0.5);
+      box-shadow: 0 0 0 4px rgba(184, 92, 56, 0.08);
+    }
+
+    .storage-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .status {
+      position: relative;
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      min-height: 52px;
+      overflow: hidden;
+    }
+
+    .status::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.35) 50%, transparent 75%);
+      transform: translateX(-130%);
+      pointer-events: none;
+    }
+
+    .status.status-flash::before {
+      animation: shimmer 0.7s ease;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(42, 33, 27, 0.34);
+      backdrop-filter: blur(8px);
+      z-index: 30;
+      animation: overlayIn 0.2s ease;
+    }
+
+    .modal-overlay[hidden] {
+      display: none;
+    }
+
+    .modal {
+      width: min(100%, 420px);
+      background: rgba(255, 252, 247, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(62, 40, 28, 0.22);
+      padding: 22px;
+      animation: modalIn 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .modal h3 {
+      margin: 0 0 10px;
+      font-size: 22px;
+    }
+
+    .modal-text {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .modal-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(22px);
+    }
+
+    body.page-ready .reveal {
+      animation: riseIn 0.68s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      animation-delay: var(--delay, 0ms);
+    }
+
+    @keyframes pulseDot {
+      0% {
+        box-shadow: 0 0 0 0 rgba(184, 92, 56, 0.42);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(184, 92, 56, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(184, 92, 56, 0);
+      }
+    }
+
+    @keyframes spinMark {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes titleBars {
+      0%, 100% {
+        transform: scaleY(1);
+        opacity: 0.88;
+      }
+      50% {
+        transform: scaleY(1.14);
+        opacity: 1;
+      }
+    }
+
+    @keyframes titleDotMove {
+      0%, 100% {
+        transform: translate(10px, 24px) scale(0.96);
+      }
+      28% {
+        transform: translate(22px, 20px) scale(1);
+      }
+      58% {
+        transform: translate(32px, 16px) scale(1.05);
+      }
+      100% {
+        transform: translate(40px, 11px) scale(1);
+      }
+    }
+
+    @keyframes barsFloat {
+      0%, 100% {
+        transform: scaleY(1);
+        opacity: 0.82;
+      }
+      50% {
+        transform: scaleY(1.14);
+        opacity: 1;
+      }
+    }
+
+    @keyframes sweepDecor {
+      0%, 100% {
+        transform: translateX(-8px);
+        opacity: 0.25;
+      }
+      50% {
+        transform: translateX(84px);
+        opacity: 0.82;
+      }
+    }
+
+    @keyframes drift {
+      0%, 100% {
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+      50% {
+        transform: translate3d(18px, 14px, 0) scale(1.08);
+      }
+    }
+
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(22px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes rowEnter {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes overlayIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes shimmer {
+      from {
+        transform: translateX(-130%);
+      }
+      to {
+        transform: translateX(130%);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .topbar {
+        flex-direction: column;
+      }
+
+      .topbar-decor {
+        align-self: flex-end;
+        width: 180px;
+        height: 128px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 14px;
+      }
+
+      .panel {
+        padding: 18px;
+        border-radius: 22px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .title-row {
+        align-items: flex-start;
+      }
+
+      .topbar-decor {
+        display: none;
+      }
+
+      .workspace-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .workspace-actions {
+        width: 100%;
+      }
+
+      .storage-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .storage-actions {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="particleField" class="particle-field" aria-hidden="true"></div>
+  <main class="app">
+    <section class="panel reveal" style="--delay: 40ms;">
+      <div class="topbar">
+        <div class="topbar-copy">
+          <div class="title-row">
+            <div class="title-mark" aria-hidden="true">
+              <div class="title-bars">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <div class="title-trend">
+                <span class="title-seg seg-1"></span>
+                <span class="title-seg seg-2"></span>
+                <span class="title-seg seg-3"></span>
+                <span class="title-dot"></span>
+              </div>
+            </div>
+            <div class="title-stack">
+              <h1>平均价计算器</h1>
+              <p class="eyebrow">AVERAGE COST CALCULATOR</p>
+            </div>
+          </div>
+          <p class="subtitle">
+          </p>
+          <div class="live-strip" aria-label="功能亮点">
+            <span class="live-pill">实时计算</span>
+            <span class="live-pill">本地储存</span>
+            <span class="live-pill">可修改记录</span>
+          </div>
+        </div>
+        <div class="topbar-decor" aria-hidden="true">
+          <div class="decor-orbit"></div>
+          <div class="decor-grid">
+            <div class="decor-spark"></div>
+            <div class="decor-bars">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-grid">
+        <article class="summary-card reveal" style="--delay: 120ms;">
+          <span>总数量</span>
+          <strong id="totalQty">0</strong>
+        </article>
+        <article class="summary-card reveal" style="--delay: 180ms;">
+          <span>平均价</span>
+          <strong id="averagePrice">0.00</strong>
+        </article>
+        <article class="summary-card reveal" style="--delay: 240ms;">
+          <span>持仓成本</span>
+          <strong id="totalCost">0.00</strong>
+        </article>
+      </div>
+
+      <section class="workspace reveal" style="--delay: 300ms;">
+        <div class="workspace-head">
+          <div class="workspace-title">
+            <h2>当前计算单</h2>
+            <span id="recordState" class="tag">未储存</span>
+          </div>
+          <div class="workspace-actions">
+            <button id="newBtn" class="btn-secondary" type="button">新建</button>
+            <button id="saveAsBtn" class="btn-ghost" type="button">另存为</button>
+            <button id="saveBtn" class="btn-primary" type="button">储存当前记录</button>
+          </div>
+        </div>
+
+        <div class="workspace-note">
+          <div class="help">提示：正数量按加仓计算，负数量按减仓处理；减仓后剩余仓位的平均价会按持仓成本自动更新。</div>
+        </div>
+
+        <div class="storage-bar">
+          <div class="storage-field">
+            <label class="storage-label" for="savedRecordSelect">已储存记录</label>
+            <select id="savedRecordSelect">
+              <option value="">暂无已储存记录</option>
+            </select>
+          </div>
+          <div class="storage-actions">
+            <button id="deleteStoredBtn" class="btn-ghost" type="button">删除</button>
+          </div>
+        </div>
+
+        <div class="workspace-note">
+          <div id="statusBox" class="status">准备就绪，可以开始输入数量和单价。</div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 90px;">序号</th>
+                <th>单价</th>
+                <th>数量</th>
+                <th>小计</th>
+                <th style="width: 110px;">
+                  <div class="row-actions">
+                    <span>操作</span>
+                    <button id="addRowBtn" class="icon-btn add" type="button" aria-label="新增一行" title="新增一行">+</button>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="rowsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="saveModal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="saveModalTitle">
+      <h3 id="saveModalTitle">储存当前记录</h3>
+      <input id="saveNameInput" type="text" placeholder="名称" />
+      <div class="modal-actions">
+        <button id="cancelSaveBtn" class="btn-ghost" type="button">取消</button>
+        <button id="confirmSaveBtn" class="btn-primary" type="button">确认储存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteModal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+      <h3 id="deleteModalTitle">确认删除</h3>
+      <p id="deleteModalText" class="modal-text">确定要删除这条记录吗？</p>
+      <div class="modal-actions">
+        <button id="cancelDeleteBtn" class="btn-ghost" type="button">取消</button>
+        <button id="confirmDeleteBtn" class="btn-primary" type="button">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "average-price-calculator-records";
+    const SELECTED_RECORD_KEY = "average-price-calculator-selected-record";
+
+    const rowsBody = document.getElementById("rowsBody");
+    const averagePrice = document.getElementById("averagePrice");
+    const totalQty = document.getElementById("totalQty");
+    const totalCost = document.getElementById("totalCost");
+    const statusBox = document.getElementById("statusBox");
+    const savedRecordSelect = document.getElementById("savedRecordSelect");
+    const deleteStoredBtn = document.getElementById("deleteStoredBtn");
+    const recordState = document.getElementById("recordState");
+    const saveModal = document.getElementById("saveModal");
+    const saveNameInput = document.getElementById("saveNameInput");
+    const cancelSaveBtn = document.getElementById("cancelSaveBtn");
+    const confirmSaveBtn = document.getElementById("confirmSaveBtn");
+    const saveAsBtn = document.getElementById("saveAsBtn");
+    const deleteModal = document.getElementById("deleteModal");
+    const deleteModalText = document.getElementById("deleteModalText");
+    const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+    const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+    const particleField = document.getElementById("particleField");
+
+    let currentRecordId = null;
+    let currentRecordName = "";
+    let currentRows = [];
+    let memoryRecords = [];
+    let pendingDeleteRecordId = null;
+    let selectedStoredRecordId = "";
+    let saveMode = "save";
+    let particleModels = [];
+    let particleAnimationId = 0;
+    let lastParticleTimestamp = 0;
+    const pointerState = {
+      x: 0,
+      y: 0,
+      active: false
+    };
+
+    function generateId() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+      }
+
+      return `row-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+    }
+
+    function createEmptyRow() {
+      return {
+        id: generateId(),
+        qty: "",
+        price: ""
+      };
+    }
+
+    function formatNumber(value, digits = 2) {
+      const safeValue = Number.isFinite(Number(value)) ? Number(value) : 0;
+      return safeValue.toLocaleString("zh-CN", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      });
+    }
+
+    function formatDate(dateText) {
+      const date = new Date(dateText);
+      return date.toLocaleString("zh-CN", {
+        hour12: false
+      });
+    }
+
+    function initParticles() {
+      if (!particleField) {
+        return;
+      }
+
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        particleField.innerHTML = "";
+        particleModels = [];
+        if (particleAnimationId) {
+          cancelAnimationFrame(particleAnimationId);
+          particleAnimationId = 0;
+        }
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      const count = window.innerWidth < 720 ? 16 : 26;
+      const tints = [
+        "rgba(184, 92, 56, 0.24)",
+        "rgba(72, 124, 110, 0.18)",
+        "rgba(209, 170, 120, 0.18)",
+        "rgba(255, 255, 255, 0.22)"
+      ];
+
+      particleField.innerHTML = "";
+      particleModels = [];
+
+      for (let index = 0; index < count; index += 1) {
+        const particle = document.createElement("span");
+        particle.className = "particle";
+        const size = Math.random() * 18 + 12;
+        particle.style.setProperty("--size", `${size.toFixed(2)}px`);
+        particle.style.setProperty("--opacity", `${(Math.random() * 0.18 + 0.2).toFixed(2)}`);
+        particle.style.setProperty("--tint", tints[index % tints.length]);
+        fragment.appendChild(particle);
+
+        particleModels.push({
+          el: particle,
+          size,
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          speed: Math.random() * 20 + 10,
+          drift: Math.random() * 24 + 8,
+          phase: Math.random() * Math.PI * 2,
+          wobbleSpeed: Math.random() * 0.6 + 0.25,
+          repulseX: 0,
+          repulseY: 0,
+          opacity: Math.random() * 0.18 + 0.2
+        });
+      }
+
+      particleField.appendChild(fragment);
+      if (!particleAnimationId) {
+        lastParticleTimestamp = 0;
+        particleAnimationId = requestAnimationFrame(animateParticles);
+      }
+    }
+
+    function resetParticle(particle, width, height) {
+      particle.x = Math.random() * width;
+      particle.y = height + particle.size + Math.random() * 120;
+      particle.speed = Math.random() * 20 + 10;
+      particle.drift = Math.random() * 24 + 8;
+      particle.phase = Math.random() * Math.PI * 2;
+      particle.wobbleSpeed = Math.random() * 0.6 + 0.25;
+    }
+
+    function animateParticles(timestamp) {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const delta = lastParticleTimestamp ? Math.min((timestamp - lastParticleTimestamp) / 1000, 0.04) : 0.016;
+      lastParticleTimestamp = timestamp;
+
+      particleModels.forEach((particle) => {
+        particle.y -= particle.speed * delta;
+        particle.phase += particle.wobbleSpeed * delta;
+
+        if (particle.y < -particle.size - 40) {
+          resetParticle(particle, width, height);
+        }
+
+        const baseX = particle.x + Math.sin(particle.phase) * particle.drift;
+        let offsetX = particle.repulseX * 0.88;
+        let offsetY = particle.repulseY * 0.88;
+
+        if (pointerState.active) {
+          const dx = baseX - pointerState.x;
+          const dy = particle.y - pointerState.y;
+          const distance = Math.hypot(dx, dy);
+          const radius = 170;
+
+          if (distance < radius && distance > 0.001) {
+            const force = (1 - distance / radius) * 22;
+            offsetX += (dx / distance) * force;
+            offsetY += (dy / distance) * force;
+          }
+        }
+
+        particle.repulseX = offsetX;
+        particle.repulseY = offsetY;
+
+        const scale = 1 + Math.sin(particle.phase * 1.4) * 0.06;
+        particle.el.style.transform = `translate3d(${(baseX + offsetX).toFixed(2)}px, ${(particle.y + offsetY).toFixed(2)}px, 0) scale(${scale.toFixed(3)})`;
+        particle.el.style.opacity = (particle.opacity + Math.sin(particle.phase) * 0.035).toFixed(3);
+      });
+
+      particleAnimationId = requestAnimationFrame(animateParticles);
+    }
+
+    function getStoredRecords() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch (error) {
+        console.error("读取储存记录失败", error);
+        return [...memoryRecords];
+      }
+    }
+
+    function getSelectedStoredRecordId() {
+      try {
+        return localStorage.getItem(SELECTED_RECORD_KEY) || "";
+      } catch (error) {
+        console.error("读取当前选中记录失败", error);
+        return selectedStoredRecordId;
+      }
+    }
+
+    function setStoredRecords(records) {
+      memoryRecords = [...records];
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      } catch (error) {
+        console.error("写入储存记录失败", error);
+        setStatus("浏览器限制了本地储存，当前仅在本次打开期间临时保存。");
+      }
+    }
+
+    function setSelectedStoredRecordId(recordId) {
+      selectedStoredRecordId = recordId || "";
+
+      try {
+        if (selectedStoredRecordId) {
+          localStorage.setItem(SELECTED_RECORD_KEY, selectedStoredRecordId);
+        } else {
+          localStorage.removeItem(SELECTED_RECORD_KEY);
+        }
+      } catch (error) {
+        console.error("写入当前选中记录失败", error);
+      }
+    }
+
+    function setStatus(message) {
+      statusBox.textContent = message;
+      statusBox.classList.remove("status-flash");
+      void statusBox.offsetWidth;
+      statusBox.classList.add("status-flash");
+    }
+
+    function setCurrentStateLabel(saved) {
+      recordState.textContent = saved ? "已储存" : "未储存";
+    }
+
+    function calculateTotals(rows) {
+      let qty = 0;
+      let cost = 0;
+
+      rows.forEach((row) => {
+        const rowQty = Number(row.qty);
+        const rowPrice = Number(row.price);
+
+        if (!Number.isFinite(rowQty) || rowQty === 0 || !Number.isFinite(rowPrice) || rowPrice < 0) {
+          return;
+        }
+
+        if (qty === 0 || Math.sign(rowQty) === Math.sign(qty)) {
+          qty += rowQty;
+          cost += rowQty * rowPrice;
+          return;
+        }
+
+        const currentAvg = Math.abs(cost / qty);
+
+        if (Math.abs(rowQty) < Math.abs(qty)) {
+          qty += rowQty;
+          cost -= Math.sign(cost || qty) * Math.abs(rowQty) * currentAvg;
+        } else if (Math.abs(rowQty) === Math.abs(qty)) {
+          qty = 0;
+          cost = 0;
+        } else {
+          qty += rowQty;
+          cost = qty * rowPrice;
+        }
+
+        if (Math.abs(qty) < 1e-10) {
+          qty = 0;
+          cost = 0;
+        }
+      });
+
+      return {
+        qty,
+        cost,
+        average: qty !== 0 ? Math.abs(cost / qty) : 0
+      };
+    }
+
+    function markDirty() {
+      setCurrentStateLabel(false);
+    }
+
+    function updateSummary() {
+      const totals = calculateTotals(currentRows);
+      averagePrice.textContent = formatNumber(totals.average);
+      totalQty.textContent = formatNumber(totals.qty, 4).replace(/\.?0+$/, "");
+      totalCost.textContent = formatNumber(totals.cost);
+    }
+
+    function createCell() {
+      return document.createElement("td");
+    }
+
+    function createNumberInput(row, field, placeholder) {
+      const input = document.createElement("input");
+      input.type = "number";
+      input.step = "any";
+      if (field === "price") {
+        input.min = "0";
+      }
+      input.placeholder = placeholder;
+      input.value = row[field];
+      input.dataset.field = field;
+      input.dataset.id = row.id;
+      return input;
+    }
+
+    function renderRows() {
+      rowsBody.innerHTML = "";
+
+      currentRows.forEach((row, index) => {
+        const tr = document.createElement("tr");
+        const subtotal = Number.isFinite(Number(row.qty)) && Number(row.qty) !== 0 && Number.isFinite(Number(row.price)) && Number(row.price) >= 0
+          ? Number(row.qty) * Number(row.price)
+          : 0;
+
+        tr.dataset.id = row.id;
+
+        const orderCell = createCell();
+        const orderStrong = document.createElement("strong");
+        orderStrong.textContent = String(index + 1);
+        orderCell.appendChild(orderStrong);
+
+        const priceCell = createCell();
+        priceCell.appendChild(createNumberInput(row, "price", "输入单价"));
+
+        const qtyCell = createCell();
+        qtyCell.appendChild(createNumberInput(row, "qty", "输入数量"));
+
+        const subtotalCell = createCell();
+        subtotalCell.className = "money";
+        subtotalCell.textContent = formatNumber(subtotal);
+
+        const actionCell = createCell();
+        const actionWrap = document.createElement("div");
+        actionWrap.className = "row-actions";
+        const removeButton = document.createElement("button");
+        removeButton.className = "icon-btn danger";
+        removeButton.type = "button";
+        removeButton.dataset.action = "remove";
+        removeButton.dataset.id = row.id;
+        removeButton.textContent = "删除";
+        actionWrap.appendChild(removeButton);
+        actionCell.appendChild(actionWrap);
+
+        tr.append(orderCell, priceCell, qtyCell, subtotalCell, actionCell);
+        tr.classList.add("row-appear");
+        tr.style.setProperty("--row-delay", `${index * 36}ms`);
+
+        rowsBody.appendChild(tr);
+      });
+
+      updateSummary();
+    }
+
+    function updateRowSubtotal(rowId) {
+      const row = currentRows.find((item) => item.id === rowId);
+      const rowElement = rowsBody.querySelector(`tr[data-id="${rowId}"]`);
+      if (!row || !rowElement) {
+        return;
+      }
+
+      const subtotal = Number.isFinite(Number(row.qty)) && Number(row.qty) !== 0 && Number.isFinite(Number(row.price)) && Number(row.price) >= 0
+        ? Number(row.qty) * Number(row.price)
+        : 0;
+
+      const subtotalCell = rowElement.querySelector(".money");
+      if (subtotalCell) {
+        subtotalCell.textContent = formatNumber(subtotal);
+      }
+    }
+
+    function renderStoredRecordOptions() {
+      const records = getStoredRecords();
+      const previousValue = savedRecordSelect.value || selectedStoredRecordId || getSelectedStoredRecordId() || currentRecordId || "";
+      savedRecordSelect.innerHTML = "";
+
+      if (!records.length) {
+        const emptyOption = document.createElement("option");
+        emptyOption.value = "";
+        emptyOption.textContent = "暂无已储存记录";
+        savedRecordSelect.appendChild(emptyOption);
+        savedRecordSelect.disabled = true;
+        deleteStoredBtn.disabled = true;
+        setSelectedStoredRecordId("");
+        return;
+      }
+
+      savedRecordSelect.disabled = false;
+      deleteStoredBtn.disabled = false;
+
+      records
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .forEach((record) => {
+          const option = document.createElement("option");
+          option.value = record.id;
+          option.textContent = `${record.name} · ${formatDate(record.updatedAt)}`;
+          savedRecordSelect.appendChild(option);
+        });
+
+      const matched = records.some((record) => record.id === previousValue);
+      savedRecordSelect.value = matched ? previousValue : records[0].id;
+      setSelectedStoredRecordId(savedRecordSelect.value);
+    }
+
+    function autoLoadSelectedRecordOnStart() {
+      const recordId = getSelectedStoredRecordId() || savedRecordSelect.value;
+      if (!recordId) {
+        return;
+      }
+
+      loadRecord(recordId, true, false);
+    }
+
+    function openSaveModal(mode = "save-as") {
+      saveMode = mode;
+      document.getElementById("saveModalTitle").textContent = mode === "save-as" ? "另存为" : "储存当前记录";
+      saveNameInput.value = "";
+      saveModal.hidden = false;
+      requestAnimationFrame(() => {
+        saveNameInput.focus();
+      });
+    }
+
+    function closeSaveModal() {
+      saveModal.hidden = true;
+    }
+
+    function openDeleteModal(recordId, recordName) {
+      pendingDeleteRecordId = recordId;
+      deleteModalText.textContent = `确定要删除“${recordName}”吗？`;
+      deleteModal.hidden = false;
+    }
+
+    function closeDeleteModal() {
+      deleteModal.hidden = true;
+      pendingDeleteRecordId = null;
+    }
+
+    function addRow() {
+      currentRows.push(createEmptyRow());
+      markDirty();
+      renderRows();
+    }
+
+    function resetCurrentRecord(clearSelection = true) {
+      currentRecordId = null;
+      currentRecordName = "";
+      pendingDeleteRecordId = null;
+      if (clearSelection) {
+        setSelectedStoredRecordId("");
+      }
+      currentRows = [createEmptyRow(), createEmptyRow()];
+      setCurrentStateLabel(false);
+      setStatus("已新建空白计算单，可以开始新的平均价计算。");
+      renderRows();
+      renderStoredRecordOptions();
+    }
+
+    function saveCurrentRecord(name, forceNew = false) {
+      const validRows = currentRows.filter((row) => row.qty !== "" || row.price !== "");
+
+      if (!validRows.length) {
+        setStatus("当前没有可储存的数据，请先输入至少一行数量和单价。");
+        return;
+      }
+
+      const records = getStoredRecords();
+      const record = {
+        id: forceNew ? generateId() : (currentRecordId || generateId()),
+        name,
+        rows: currentRows,
+        updatedAt: new Date().toISOString()
+      };
+
+      const index = records.findIndex((item) => item.id === record.id);
+      if (index >= 0) {
+        records[index] = record;
+      } else {
+        records.push(record);
+      }
+
+      currentRecordId = record.id;
+      currentRecordName = name;
+      setStoredRecords(records);
+      pendingDeleteRecordId = null;
+      setSelectedStoredRecordId(record.id);
+      setCurrentStateLabel(true);
+      setStatus(`已储存：${name}`);
+      renderStoredRecordOptions();
+    }
+
+    function cloneRows(rows) {
+      return rows.map((row) => ({
+        id: generateId(),
+        qty: row.qty ?? "",
+        price: row.price ?? ""
+      }));
+    }
+
+    function loadRecord(recordId, editMode, notify = true) {
+      const records = getStoredRecords();
+      const record = records.find((item) => item.id === recordId);
+
+      if (!record) {
+        setStatus("这条记录不存在，可能已经被删除。");
+        renderStoredRecordOptions();
+        return;
+      }
+
+      pendingDeleteRecordId = null;
+      setSelectedStoredRecordId(record.id);
+
+      if (editMode) {
+        currentRecordId = record.id;
+        currentRecordName = record.name;
+        currentRows = record.rows.length ? cloneRows(record.rows) : [createEmptyRow()];
+        setCurrentStateLabel(true);
+        if (notify) {
+          setStatus(`已载入：${record.name}，储存后会覆盖原记录。`);
+        }
+      } else {
+        currentRecordId = null;
+        currentRecordName = `${record.name} 副本`;
+        currentRows = record.rows.length ? cloneRows(record.rows) : [createEmptyRow()];
+        setCurrentStateLabel(false);
+        if (notify) {
+          setStatus(`已读取：${record.name}，当前作为新记录副本打开。`);
+        }
+      }
+
+      renderRows();
+      renderStoredRecordOptions();
+    }
+
+    function deleteRecord(recordId) {
+      const records = getStoredRecords();
+      const target = records.find((item) => item.id === recordId);
+      const nextRecords = records.filter((item) => item.id !== recordId);
+      setStoredRecords(nextRecords);
+      pendingDeleteRecordId = null;
+
+      currentRecordId = null;
+      currentRecordName = "";
+      currentRows = [createEmptyRow(), createEmptyRow()];
+      setCurrentStateLabel(false);
+      renderRows();
+
+      if (selectedStoredRecordId === recordId) {
+        setSelectedStoredRecordId("");
+      }
+
+      renderStoredRecordOptions();
+      setStatus(target ? `已删除：${target.name}` : "记录已删除。");
+    }
+
+    rowsBody.addEventListener("input", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) {
+        return;
+      }
+
+      const rowId = target.dataset.id;
+      const field = target.dataset.field;
+      if (!rowId || !field) {
+        return;
+      }
+
+      currentRows = currentRows.map((row) => (
+        row.id === rowId
+          ? { ...row, [field]: target.value }
+          : row
+      ));
+
+      markDirty();
+      updateRowSubtotal(rowId);
+      updateSummary();
+    });
+
+    rowsBody.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+
+      if (target.dataset.action === "remove") {
+        const rowId = target.dataset.id;
+        currentRows = currentRows.filter((row) => row.id !== rowId);
+        if (!currentRows.length) {
+          currentRows = [createEmptyRow()];
+        }
+        markDirty();
+        renderRows();
+      }
+    });
+
+    document.getElementById("addRowBtn").addEventListener("click", addRow);
+    document.getElementById("newBtn").addEventListener("click", resetCurrentRecord);
+    document.getElementById("saveBtn").addEventListener("click", () => {
+      const validRows = currentRows.filter((row) => row.qty !== "" || row.price !== "");
+      if (!validRows.length) {
+        setStatus("当前没有可储存的数据，请先输入至少一行数量和单价。");
+        return;
+      }
+
+      if (currentRecordId && currentRecordName.trim()) {
+        saveCurrentRecord(currentRecordName.trim());
+        return;
+      }
+
+      openSaveModal("save");
+    });
+    saveAsBtn.addEventListener("click", () => {
+      const validRows = currentRows.filter((row) => row.qty !== "" || row.price !== "");
+      if (!validRows.length) {
+        setStatus("当前没有可储存的数据，请先输入至少一行数量和单价。");
+        return;
+      }
+
+      openSaveModal("save-as");
+    });
+    savedRecordSelect.addEventListener("change", () => {
+      setSelectedStoredRecordId(savedRecordSelect.value);
+      if (!selectedStoredRecordId) {
+        return;
+      }
+
+      loadRecord(selectedStoredRecordId, true);
+    });
+    deleteStoredBtn.addEventListener("click", () => {
+      if (!selectedStoredRecordId) {
+        setStatus("请先选择一条已储存记录。");
+        return;
+      }
+
+      const record = getStoredRecords().find((item) => item.id === selectedStoredRecordId);
+      if (!record) {
+        setStatus("这条记录不存在，可能已经被删除。");
+        renderStoredRecordOptions();
+        return;
+      }
+
+      openDeleteModal(record.id, record.name);
+    });
+    cancelSaveBtn.addEventListener("click", () => {
+      closeSaveModal();
+      setStatus("已取消储存。");
+    });
+    confirmSaveBtn.addEventListener("click", () => {
+      const name = saveNameInput.value.trim();
+      if (!name) {
+        setStatus("记录名称不能为空。");
+        saveNameInput.focus();
+        return;
+      }
+
+      closeSaveModal();
+      saveCurrentRecord(name, saveMode === "save-as");
+    });
+    saveNameInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        confirmSaveBtn.click();
+      }
+    });
+    saveModal.addEventListener("click", (event) => {
+      if (event.target === saveModal) {
+        closeSaveModal();
+        setStatus("已取消储存。");
+      }
+    });
+    cancelDeleteBtn.addEventListener("click", () => {
+      closeDeleteModal();
+      setStatus("已取消删除。");
+    });
+    confirmDeleteBtn.addEventListener("click", () => {
+      if (!pendingDeleteRecordId) {
+        closeDeleteModal();
+        return;
+      }
+
+      const recordId = pendingDeleteRecordId;
+      closeDeleteModal();
+      deleteRecord(recordId);
+    });
+    deleteModal.addEventListener("click", (event) => {
+      if (event.target === deleteModal) {
+        closeDeleteModal();
+        setStatus("已取消删除。");
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !saveModal.hidden) {
+        closeSaveModal();
+        setStatus("已取消储存。");
+        return;
+      }
+
+      if (event.key === "Escape" && !deleteModal.hidden) {
+        closeDeleteModal();
+        setStatus("已取消删除。");
+      }
+    });
+
+    window.addEventListener("pointermove", (event) => {
+      pointerState.x = event.clientX;
+      pointerState.y = event.clientY;
+      pointerState.active = true;
+    });
+    window.addEventListener("pointerleave", () => {
+      pointerState.active = false;
+    });
+    window.addEventListener("blur", () => {
+      pointerState.active = false;
+    });
+    initParticles();
+    window.addEventListener("resize", initParticles);
+    requestAnimationFrame(() => {
+      document.body.classList.add("page-ready");
+    });
+    resetCurrentRecord(false);
+    renderStoredRecordOptions();
+    autoLoadSelectedRecordOnStart();
+  </script>
+</body>
+</html>

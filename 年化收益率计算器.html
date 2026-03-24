@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>年化收益率计算器</title>
+  <style>
+    :root{--bg:#f4efe5;--bg2:#efe3cf;--card:rgba(255,250,244,.9);--line:rgba(90,74,51,.14);--text:#1f2933;--muted:#6b7280;--pri:#115e59;--pri2:#0b4945;--gold:#c78835;--ok:#146c43;--err:#b42318;--shadow:0 18px 50px rgba(42,32,17,.12);--r1:30px;--r2:22px;--r3:16px}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:radial-gradient(circle at 0 0,rgba(199,136,53,.16),transparent 28%),radial-gradient(circle at 100% 20%,rgba(17,94,89,.13),transparent 26%),linear-gradient(180deg,#fcf8f2,var(--bg) 55%,var(--bg2))}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(90,74,51,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(90,74,51,.03) 1px,transparent 1px);background-size:28px 28px;mask-image:linear-gradient(180deg,#000,transparent 92%)}
+    .wrap{width:min(1200px,calc(100% - 28px));margin:28px auto 36px}.hero,.card,.note{box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.65)}
+    .hero{padding:32px;border-radius:34px;background:linear-gradient(135deg,rgba(17,94,89,.94),rgba(20,70,67,.9) 54%,rgba(199,136,53,.86));color:#faf6f0;position:relative;overflow:hidden}
+    .hero:after{content:"";position:absolute;right:-70px;top:-70px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.2),transparent 70%)}
+    .badge{display:inline-flex;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.14);font-size:12px;letter-spacing:.05em}
+    h1{margin:14px 0 10px;font-size:clamp(30px,4.8vw,46px);line-height:1.05}p{margin:0}.hero p{max-width:760px;color:rgba(250,246,240,.82);line-height:1.75;font-size:14px}
+    .hero-grid,.grid,.metrics{display:grid;gap:16px}.hero-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:26px}.hero-stat{padding:18px;border-radius:20px;background:rgba(255,255,255,.12);backdrop-filter:blur(12px)}.hero-stat span{display:block;font-size:12px;color:rgba(250,246,240,.74);margin-bottom:8px}.hero-stat strong{font-size:clamp(22px,3vw,30px);line-height:1.15}
+    .grid{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:22px}.card{padding:24px;border-radius:var(--r1);background:var(--card);backdrop-filter:blur(18px)}
+    .head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:20px}.head h2{margin:0;font-size:24px}.sub{margin-top:8px;color:var(--muted);font-size:14px;line-height:1.65}.tag{padding:9px 13px;border-radius:999px;background:rgba(17,94,89,.08);color:var(--pri);font-size:12px;white-space:nowrap}
+    form,.field,.stack{display:grid;gap:16px}.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{gap:8px}label{font-size:14px;font-weight:600;color:#43505f}
+    input,select,button{font:inherit}input,select{width:100%;min-height:50px;padding:13px 14px;border:1px solid var(--line);border-radius:var(--r3);background:rgba(255,255,255,.92);color:var(--text);transition:.2s}input:focus,select:focus{outline:0;border-color:rgba(17,94,89,.5);box-shadow:0 0 0 4px rgba(17,94,89,.11)}
+    .in{position:relative}.pre,.suf{position:absolute;top:50%;transform:translateY(-50%);color:#72808e;font-size:14px}.pre{left:14px}.suf{right:14px}.has-pre input{padding-left:36px}.has-suf input{padding-right:40px}
+    .tog{display:flex;gap:10px;flex-wrap:wrap}.opt{position:relative;flex:1 1 0;min-width:130px}.opt input{position:absolute;inset:0;opacity:0}.opt span{display:flex;align-items:center;justify-content:center;min-height:50px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.88);font-weight:600;color:#43505f;transition:.2s}.opt input:checked+span{background:linear-gradient(135deg,rgba(17,94,89,.17),rgba(199,136,53,.14));border-color:rgba(17,94,89,.38);color:var(--pri2)}
+    .help{margin-top:-4px;color:var(--muted);font-size:12px;line-height:1.6}.hide{display:none}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:16px;min-height:48px;padding:0 18px;cursor:pointer;transition:.18s}.btn:hover{transform:translateY(-1px)}.pri{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff}.sec{background:rgba(17,94,89,.08);color:var(--pri)}.ghost{background:rgba(199,136,53,.13);color:#87581d}
+    .status{min-height:22px;font-size:13px;font-weight:600}.ok{color:var(--ok)}.err{color:var(--err)}
+    .box{margin-top:20px;padding:18px;border-radius:24px;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(246,240,230,.96));border:1px solid rgba(90,74,51,.08)}.box-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:16px}.box h3{margin:0;font-size:17px}.formula{padding:12px 14px;border-radius:16px;background:rgba(17,94,89,.06);font-size:13px;color:#4a5663;line-height:1.6}
+    .metrics{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:16px}.metric{padding:15px;border-radius:18px;background:rgba(255,255,255,.86);border:1px solid rgba(90,74,51,.08)}.metric span{display:block;font-size:12px;color:var(--muted);margin-bottom:8px}.metric strong{display:block;font-size:24px;line-height:1.1;word-break:break-word}.metric small{display:block;margin-top:8px;font-size:12px;color:#627181;line-height:1.55}
+    .note{margin-top:24px;padding:17px 18px;border-radius:22px;background:rgba(255,252,247,.72);color:#56606f;font-size:13px;line-height:1.75}.toast{position:fixed;right:18px;bottom:18px;padding:13px 15px;border-radius:15px;background:rgba(31,41,51,.92);color:#fff;opacity:0;transform:translateY(18px);pointer-events:none;transition:.25s}.toast.show{opacity:1;transform:none}
+    @media (max-width:980px){.grid,.hero-grid{grid-template-columns:1fr}}
+    @media (max-width:640px){.wrap{width:min(100% - 18px,900px)}.hero,.card{padding:20px}.two,.metrics{grid-template-columns:1fr}.head,.box-top{flex-direction:column;align-items:stretch}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="badge">金融测算工具 · 利息收益 / 年化率双窗口</div>
+      <h1>年化收益率计算器</h1>
+      <p>适用于存款、理财、债券和项目收益测算。左侧用于计算利息收益，右侧用于根据实际结果反推年化率，支持即时联动、复制结果和本地记忆。</p>
+      <div class="hero-grid">
+        <div class="hero-stat"><span>当前本金参考</span><strong id="heroP">¥0.00</strong></div>
+        <div class="hero-stat"><span>预计利息收益</span><strong id="heroI">¥0.00</strong></div>
+        <div class="hero-stat"><span>复利年化结果</span><strong id="heroA">0.00%</strong></div>
+      </div>
+    </section>
+
+    <main class="grid">
+      <section class="card">
+        <div class="head">
+          <div>
+            <h2>利息收益计算</h2>
+            <p class="sub">输入本金、年利率和期限，自动得出利息、本息合计、期间收益率以及日均/月均收益。</p>
+          </div>
+          <div class="tag">支持单利 / 复利</div>
+        </div>
+
+        <form id="f1">
+          <div class="two">
+            <div class="field"><label for="p1">投资本金</label><div class="in has-pre"><span class="pre">¥</span><input id="p1" type="number" min="0" step="0.01"></div></div>
+            <div class="field"><label for="r1">年利率</label><div class="in has-suf"><input id="r1" type="number" step="0.01"><span class="suf">%</span></div></div>
+            <div class="field"><label for="t1">投资期限</label><input id="t1" type="number" min="0" step="0.01"></div>
+            <div class="field"><label for="u1">期限单位</label><select id="u1"><option value="day">按天</option><option value="month">按月（30天）</option><option value="year">按年（365天）</option></select></div>
+          </div>
+          <div class="field">
+            <label>计息方式</label>
+            <div class="tog">
+              <label class="opt"><input type="radio" name="type1" value="simple" checked><span>单利计算</span></label>
+              <label class="opt"><input type="radio" name="type1" value="compound"><span>复利计算</span></label>
+            </div>
+          </div>
+          <div class="field hide" id="freqWrap">
+            <label for="freq">复利频率</label>
+            <select id="freq"><option value="365">按日复利</option><option value="12" selected>按月复利</option><option value="4">按季复利</option><option value="2">半年复利</option><option value="1">按年复利</option></select>
+            <div class="help">复利：本息 = 本金 × (1 + 年利率 ÷ 复利次数)^(复利次数 × 期限年数)</div>
+          </div>
+          <div id="s1" class="status"></div>
+          <div class="actions">
+            <button class="btn pri" type="submit">立即计算</button>
+            <button class="btn sec" type="button" data-reset="1">重置</button>
+            <button class="btn ghost" type="button" data-copy="1">复制结果</button>
+          </div>
+        </form>
+
+        <div class="box">
+          <div class="box-top"><h3>收益测算结果</h3><div class="tag" id="tag1">基于单利模型</div></div>
+          <div class="formula" id="formula1">利息 = 本金 × 年利率 × 期限(天) ÷ 365</div>
+          <div class="metrics">
+            <div class="metric"><span>利息收益</span><strong id="o11">¥0.00</strong><small id="n11">根据输入参数自动测算</small></div>
+            <div class="metric"><span>到期本息</span><strong id="o12">¥0.00</strong><small id="n12">本金 + 利息</small></div>
+            <div class="metric"><span>期间收益率</span><strong id="o13">0.00%</strong><small id="n13">利息 ÷ 本金</small></div>
+            <div class="metric"><span>日均收益</span><strong id="o14">¥0.00</strong><small id="n14">利息 ÷ 天数</small></div>
+            <div class="metric"><span>月均收益</span><strong id="o15">¥0.00</strong><small id="n15">按 30 天折算</small></div>
+            <div class="metric"><span>实际投资天数</span><strong id="o16">0 天</strong><small id="n16">按所选单位换算</small></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="head">
+          <div>
+            <h2>年化率计算</h2>
+            <p class="sub">根据本金、持有期限和收益结果，反推期间收益率、简单年化率和复利年化率。</p>
+          </div>
+          <div class="tag">支持收益额 / 到期额</div>
+        </div>
+
+        <form id="f2">
+          <div class="field">
+            <label>计算模式</label>
+            <div class="tog">
+              <label class="opt"><input type="radio" name="mode2" value="income" checked><span>按收益金额</span></label>
+              <label class="opt"><input type="radio" name="mode2" value="final"><span>按到期金额</span></label>
+            </div>
+          </div>
+          <div class="two">
+            <div class="field"><label for="p2">投资本金</label><div class="in has-pre"><span class="pre">¥</span><input id="p2" type="number" min="0" step="0.01"></div></div>
+            <div class="field"><label for="t2">持有期限</label><input id="t2" type="number" min="0" step="0.01"></div>
+            <div class="field"><label for="u2">期限单位</label><select id="u2"><option value="day">按天</option><option value="month">按月（30天）</option><option value="year">按年（365天）</option></select></div>
+            <div class="field" id="incomeWrap"><label for="inc">收益金额</label><div class="in has-pre"><span class="pre">¥</span><input id="inc" type="number" step="0.01"></div></div>
+            <div class="field hide" id="finalWrap"><label for="fin">到期金额</label><div class="in has-pre"><span class="pre">¥</span><input id="fin" type="number" min="0" step="0.01"></div></div>
+          </div>
+          <div class="help">简单年化适合快速对比，复利年化更接近资金持续滚动的真实效率，负收益也会得到对应负年化。</div>
+          <div id="s2" class="status"></div>
+          <div class="actions">
+            <button class="btn pri" type="submit">计算年化率</button>
+            <button class="btn sec" type="button" data-reset="2">重置</button>
+            <button class="btn ghost" type="button" data-copy="2">复制结果</button>
+          </div>
+        </form>
+
+        <div class="box">
+          <div class="box-top"><h3>年化结果展示</h3><div class="tag" id="tag2">按收益金额计算</div></div>
+          <div class="formula" id="formula2">简单年化率 = 期间收益率 × 365 ÷ 持有天数</div>
+          <div class="metrics">
+            <div class="metric"><span>期间收益金额</span><strong id="o21">¥0.00</strong><small id="n21">到期金额 - 本金</small></div>
+            <div class="metric"><span>期间收益率</span><strong id="o22">0.00%</strong><small id="n22">收益 ÷ 本金</small></div>
+            <div class="metric"><span>简单年化率</span><strong id="o23">0.00%</strong><small id="n23">线性口径</small></div>
+            <div class="metric"><span>复利年化率</span><strong id="o24">0.00%</strong><small id="n24">滚动口径</small></div>
+            <div class="metric"><span>到期金额</span><strong id="o25">¥0.00</strong><small id="n25">本金 + 期间收益</small></div>
+            <div class="metric"><span>平均每日收益率</span><strong id="o26">0.00%</strong><small id="n26">期间收益率 ÷ 天数</small></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section class="note">本页面按 365 天年化口径计算，按月时采用 30 天估算。适合方案展示和日常测算；若涉及手续费、税费、节假日计息或不规则现金流，建议再按实际业务规则复核。</section>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script>
+    const $=id=>document.getElementById(id),nf=new Intl.NumberFormat("zh-CN",{style:"currency",currency:"CNY",minimumFractionDigits:2,maximumFractionDigits:2}),pf=new Intl.NumberFormat("zh-CN",{minimumFractionDigits:2,maximumFractionDigits:2});
+    const money=v=>nf.format(Number.isFinite(v)?v:0),pct=v=>`${pf.format((Number.isFinite(v)?v:0)*100)}%`,days=v=>`${pf.format(v)} 天`,num=id=>Number($(id).value),toDays=(v,u)=>u==="month"?v*30:u==="year"?v*365:v;
+    const setStatus=(id,msg,type="")=>{$(id).className=`status ${type}`.trim();$(id).textContent=msg;};
+    let tt;function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(tt);tt=setTimeout(()=>$("toast").classList.remove("show"),2200);}
+    function zero1(){$("o11").textContent="¥0.00";$("o12").textContent="¥0.00";$("o13").textContent="0.00%";$("o14").textContent="¥0.00";$("o15").textContent="¥0.00";$("o16").textContent="0.00 天";$("n11").textContent="根据输入参数自动测算";$("n12").textContent="本金 + 利息";$("n13").textContent="利息 ÷ 本金";$("heroP").textContent="¥0.00";$("heroI").textContent="¥0.00";}
+    function zero2(){$("o21").textContent="¥0.00";$("o22").textContent="0.00%";$("o23").textContent="0.00%";$("o24").textContent="0.00%";$("o25").textContent="¥0.00";$("o26").textContent="0.00%";$("n21").textContent="到期金额 - 本金";$("heroA").textContent="0.00%";}
+    function ui1(){const m=document.querySelector('input[name="type1"]:checked').value;$("freqWrap").classList.toggle("hide",m!=="compound");$("tag1").textContent=m==="compound"?"基于复利模型":"基于单利模型";$("formula1").textContent=m==="compound"?"本息 = 本金 × (1 + 年利率 ÷ 复利次数)^(复利次数 × 期限年数)":"利息 = 本金 × 年利率 × 期限(天) ÷ 365"}
+    function ui2(){const m=document.querySelector('input[name="mode2"]:checked').value;$("incomeWrap").classList.toggle("hide",m!=="income");$("finalWrap").classList.toggle("hide",m!=="final");$("tag2").textContent=m==="income"?"按收益金额计算":"按到期金额计算";$("formula2").textContent=m==="income"?"简单年化率 = 期间收益率 × 365 ÷ 持有天数":"复利年化率 = (到期金额 ÷ 本金)^(365 ÷ 持有天数) - 1"}
+    function calc1(msg=false){const p=num("p1"),r=num("r1")/100,t=num("t1"),u=$("u1").value,d=toDays(t,u),m=document.querySelector('input[name="type1"]:checked').value,f=Number($("freq").value);if(!(p>0))return setStatus("s1","请输入大于 0 的投资本金。","err"),null;if(!Number.isFinite(r)||r<0)return setStatus("s1","年利率不能小于 0。","err"),null;if(!(t>0)&&!(d>0)||!(d>0))return setStatus("s1","请输入有效的投资期限。","err"),null;let i=0,total=0;if(m==="compound"){total=p*Math.pow(1+r/f,f*(d/365));i=total-p}else{i=p*r*(d/365);total=p+i}const y=i/p,di=i/d,mi=i/(d/30);$("o11").textContent=money(i);$("o12").textContent=money(total);$("o13").textContent=pct(y);$("o14").textContent=money(di);$("o15").textContent=money(mi);$("o16").textContent=days(d);$("n11").textContent=m==="compound"?"复利滚存后的累计利息":"单利条件下的到期利息";$("n12").textContent=`本金 ${money(p)} + 利息 ${money(i)}`;$("n13").textContent=`在 ${days(d)} 内的累计收益率`;setStatus("s1","测算完成，可继续调整参数实时比较。","ok");if(msg)toast("利息收益已完成计算");return{p,i}}
+    function calc2(msg=false){const p=num("p2"),t=num("t2"),u=$("u2").value,d=toDays(t,u),m=document.querySelector('input[name="mode2"]:checked').value;if(!(p>0))return setStatus("s2","请输入大于 0 的投资本金。","err"),null;if(!(t>0)&&!(d>0)||!(d>0))return setStatus("s2","请输入有效的持有期限。","err"),null;let profit=0,total=0;if(m==="income"){profit=num("inc");if(!Number.isFinite(profit)||profit<=-p)return setStatus("s2","收益金额不能使到期金额小于或等于 0。","err"),null;total=p+profit}else{total=num("fin");if(!(total>0))return setStatus("s2","请输入大于 0 的到期金额。","err"),null;profit=total-p}const pr=profit/p,sa=pr*(365/d),ca=Math.pow(total/p,365/d)-1,dr=pr/d;$("o21").textContent=money(profit);$("o22").textContent=pct(pr);$("o23").textContent=pct(sa);$("o24").textContent=pct(ca);$("o25").textContent=money(total);$("o26").textContent=pct(dr);$("n21").textContent=`本金 ${money(p)} 在 ${days(d)} 内的净收益`;setStatus("s2","年化结果已更新，可切换模式继续测算。","ok");if(msg)toast("年化率已完成计算");return{ca}}
+    function hero(a,b){if(a){$("heroP").textContent=money(a.p);$("heroI").textContent=money(a.i)}if(b){$("heroA").textContent=pct(b.ca)}}
+    function copy(text){if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(text);return new Promise((res,rej)=>{const t=document.createElement("textarea");t.value=text;t.style.position="fixed";t.style.opacity="0";document.body.appendChild(t);t.focus();t.select();try{document.execCommand("copy");document.body.removeChild(t);res()}catch(e){document.body.removeChild(t);rej(e)}})}
+    const txt1=()=>["利息收益计算结果",`利息收益：${$("o11").textContent}`,`到期本息：${$("o12").textContent}`,`期间收益率：${$("o13").textContent}`,`日均收益：${$("o14").textContent}`,`月均收益：${$("o15").textContent}`,`投资天数：${$("o16").textContent}`].join("\n");
+    const txt2=()=>["年化率计算结果",`期间收益金额：${$("o21").textContent}`,`期间收益率：${$("o22").textContent}`,`简单年化率：${$("o23").textContent}`,`复利年化率：${$("o24").textContent}`,`到期金额：${$("o25").textContent}`,`平均每日收益率：${$("o26").textContent}`].join("\n");
+    function reset1(){$("p1").value="";$("r1").value="";$("t1").value="";$("u1").value="day";document.querySelector('input[name="type1"][value="simple"]').checked=true;$("freq").value=12;ui1();$("s1").textContent="";$("s1").className="status";zero1();toast("利息收益输入已清空")}
+    function reset2(){$("p2").value="";$("t2").value="";$("u2").value="day";document.querySelector('input[name="mode2"][value="income"]').checked=true;$("inc").value="";$("fin").value="";ui2();$("s2").textContent="";$("s2").className="status";zero2();toast("年化率输入已清空")}
+    function sync(){ui1();ui2();hero(calc1(),calc2())}
+    $("f1").addEventListener("submit",e=>{e.preventDefault();hero(calc1(true),null)});$("f2").addEventListener("submit",e=>{e.preventDefault();hero(null,calc2(true))});
+    $("f1").addEventListener("input",sync);$("f1").addEventListener("change",sync);$("f2").addEventListener("input",sync);$("f2").addEventListener("change",sync);
+    document.querySelector('[data-reset="1"]').addEventListener("click",reset1);document.querySelector('[data-reset="2"]').addEventListener("click",reset2);
+    document.querySelector('[data-copy="1"]').addEventListener("click",async()=>{try{await copy(txt1());toast("利息收益结果已复制")}catch(e){toast("复制失败，请手动复制")}});document.querySelector('[data-copy="2"]').addEventListener("click",async()=>{try{await copy(txt2());toast("年化率结果已复制")}catch(e){toast("复制失败，请手动复制")}});
+    ui1();ui2();zero1();zero2();
+  </script>
+</body>
+</html>
