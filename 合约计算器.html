@@ -17,6 +17,13 @@
         input[type=number] {
             -moz-appearance: textfield;
         }
+
+        .adaptive-number {
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: clip;
+        }
     </style>
 </head>
 <body class="bg-[#F4F4F5] text-slate-900 w-screen h-screen flex flex-col items-center justify-center p-6 antialiased" vid="8">
@@ -34,14 +41,64 @@
             <h1 class="text-xl font-bold tracking-tight text-slate-900" vid="16">TradeCalc</h1>
         </div>
         <div class="flex items-center gap-4 text-sm font-medium text-slate-500" vid="17">
-            <button class="hover:text-slate-900 transition-colors" vid="18">现货</button>
-            <button class="text-slate-900 font-semibold" vid="19">合约</button>
-            <button class="hover:text-slate-900 transition-colors" vid="20">期权</button>
+            <button id="btnSpotView" class="hover:text-slate-900 transition-colors" vid="18">现货</button>
+            <button id="btnContractView" class="text-slate-900 font-semibold transition-colors" vid="19">合约</button>
+            <button id="btnOptionView" class="hover:text-slate-900 transition-colors" vid="20">资金费率</button>
         </div>
     </div>
 
-    
-    <div class="w-full max-w-[960px] bg-white rounded-[24px] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] border border-slate-200/60 flex flex-col md:flex-row overflow-hidden" vid="21">
+    <div id="spotView" class="hidden w-full max-w-[960px]" vid="21">
+        <div class="bg-white rounded-[24px] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] border border-slate-200/60 overflow-hidden" vid="21">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-0 min-h-[420px]" vid="26">
+                <div class="px-8 py-10 md:px-10 border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center text-center" vid="27">
+                    <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide" vid="28">BTC / USDT</p>
+                    <p id="spotViewBtcPrice" class="mt-4 text-5xl md:text-6xl font-bold tracking-tight text-slate-900 tabular-nums" vid="29">--</p>
+                </div>
+                <div class="px-8 py-10 md:px-10 flex flex-col items-center justify-center text-center" vid="30">
+                    <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide" vid="31">ETH / USDT</p>
+                    <p id="spotViewEthPrice" class="mt-4 text-5xl md:text-6xl font-bold tracking-tight text-slate-900 tabular-nums" vid="32">--</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="fundingView" class="hidden w-full max-w-[960px]">
+        <div class="bg-white rounded-[24px] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] border border-slate-200/60 overflow-hidden">
+            <div class="p-8 md:p-10 border-b border-slate-100">
+                <div class="flex items-center justify-between gap-4 mb-6">
+                    <div>
+                        <p class="text-[13px] font-semibold text-slate-500 uppercase tracking-wide">历史资金费率</p>
+                        <p id="fundingViewSymbol" class="mt-2 text-2xl font-bold tracking-tight text-slate-900">BTCUSDT</p>
+                        <p id="fundingHistoryStatus" class="mt-2 text-xs text-slate-400">--</p>
+                    </div>
+                    <button id="btnRefreshFundingHistory" class="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900">
+                        刷新
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                        <p class="text-[13px] font-semibold text-slate-500 uppercase tracking-wide">当前资金费率</p>
+                        <p id="fundingViewRate" class="mt-3 text-4xl font-bold tracking-tight text-slate-900">--</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                        <p class="text-[13px] font-semibold text-slate-500 uppercase tracking-wide">下次结算</p>
+                        <p id="fundingViewTime" class="mt-3 text-4xl font-bold tracking-tight text-slate-900">--</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-8 md:p-10">
+                <div class="max-h-[420px] overflow-y-auto pr-1">
+                    <div id="fundingHistoryEmpty" class="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-sm text-slate-400">
+                        正在加载历史资金费率...
+                    </div>
+                    <div id="fundingHistoryList" class="hidden space-y-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="contractView" class="w-full max-w-[960px]">
+        <div class="bg-white rounded-[24px] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] border border-slate-200/60 flex flex-col md:flex-row overflow-hidden" vid="21">
         
         
         <div class="w-full md:w-[55%] p-8 md:p-10 flex flex-col" vid="22">
@@ -69,38 +126,58 @@
             </div>
 
             <div class="flex flex-col gap-6" vid="34">
-                
                 <div class="flex flex-col sm:flex-row gap-6" vid="35">
                     <div class="flex-1" vid="36">
-                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="37">杠杆</label>
+                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="37">币种</label>
                         <div class="relative" vid="38">
-                            <input id="inputLeverage" type="number" value="" min="1" max="125" step="1" placeholder="请输入杠杆" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-12 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="39">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="40">x</span>
+                            <select id="assetSelect" class="w-full appearance-none bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-12 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="39">
+                                <option value="BTC">BTC</option>
+                                <option value="ETH">ETH</option>
+                                <option value="ALT">其他山寨币</option>
+                            </select>
+                            <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="40">▼</span>
                         </div>
                     </div>
-                    <div class="flex-1" vid="41">
-                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="42">保证金</label>
+                    <div id="customAssetWrap" class="flex-1 hidden" vid="41">
+                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="42">山寨币代码</label>
                         <div class="relative" vid="43">
-                            <input id="inputMargin" type="text" value="" inputmode="decimal" placeholder="请输入保证金" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-16 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="44">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="45">USDT</span>
+                            <input id="inputCustomAsset" type="text" value="SOL" placeholder="如 SOL、XRP、DOGE" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-20 text-slate-900 font-semibold uppercase focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="44">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="45">/USDT</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-6" vid="46">
+                    <div class="flex-1" vid="47">
+                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="48">杠杆</label>
+                        <div class="relative" vid="49">
+                            <input id="inputLeverage" type="number" value="" min="1" max="125" step="1" placeholder="请输入杠杆" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-12 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="50">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="51">x</span>
+                        </div>
+                    </div>
+                    <div class="flex-1" vid="52">
+                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="53">保证金</label>
+                        <div class="relative" vid="54">
+                            <input id="inputMargin" type="text" value="" inputmode="decimal" placeholder="请输入保证金" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-16 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="55">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="56">USDT</span>
                         </div>
                     </div>
                 </div>
 
                 
-                <div class="flex flex-col sm:flex-row gap-6" vid="46">
-                    <div class="flex-1" vid="47">
-                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="48">开仓价</label>
-                        <div class="relative" vid="49">
-                            <input id="inputEntry" type="text" value="" inputmode="decimal" placeholder="请输入开仓价" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-16 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="50">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="51">USDT</span>
+                <div class="flex flex-col sm:flex-row gap-6" vid="57">
+                    <div class="flex-1" vid="58">
+                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="59">开仓价</label>
+                        <div class="relative" vid="60">
+                            <input id="inputEntry" type="text" value="" inputmode="decimal" placeholder="请输入开仓价" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-16 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="61">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="62">USDT</span>
                         </div>
                     </div>
-                    <div class="flex-1" vid="52">
-                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="53">平仓价</label>
-                        <div class="relative" vid="54">
-                            <input id="inputExit" type="text" value="" inputmode="decimal" placeholder="请输入平仓价" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-16 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="55">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="56">USDT</span>
+                    <div class="flex-1" vid="63">
+                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="64">平仓价</label>
+                        <div class="relative" vid="65">
+                            <input id="inputExit" type="text" value="" inputmode="decimal" placeholder="请输入平仓价" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-16 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="66">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="67">USDT</span>
                         </div>
                     </div>
                 </div>
@@ -113,7 +190,7 @@
         </div>
 
         
-        <div class="w-full md:w-[45%] bg-[#F8FAFC] p-8 md:p-10 flex flex-col justify-between border-l border-slate-100" vid="61">
+        <div class="w-full md:w-[45%] bg-[#F8FAFC] p-8 md:p-10 flex flex-col gap-6 border-l border-slate-100" vid="61">
             
             <div vid="62">
                 <h2 class="text-lg font-semibold text-slate-800 mb-8" vid="63">计算结果</h2>
@@ -121,9 +198,9 @@
                 
                 <div class="mb-10" vid="64">
                     <p class="text-[13px] font-semibold text-slate-500 mb-3 uppercase tracking-wide" vid="65">盈亏</p>
-                    <div class="flex items-end gap-3 flex-wrap" vid="66">
-                        <h3 id="pnlValue" class="text-5xl lg:text-6xl font-bold tracking-tight text-emerald-500 leading-none" vid="67">+$0.00</h3>
-                        <div class="flex items-center gap-1 mb-1" vid="68">
+                    <div class="flex flex-col items-start gap-4" vid="66">
+                        <h3 id="pnlValue" class="adaptive-number w-full text-5xl lg:text-6xl font-bold tracking-tight text-emerald-500 leading-none" vid="67">+$0.00</h3>
+                        <div class="flex items-center gap-1" vid="68">
                             <span id="roiBadge" class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold bg-emerald-100 text-emerald-700 transition-colors" vid="69">
                                 <span id="roiValue">+0.00%</span> 收益率
                             </span>
@@ -132,14 +209,21 @@
                 </div>
 
                 
-                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-6" vid="70">
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm" vid="70">
                     <div class="flex items-center justify-between mb-2" vid="71">
                         <p class="text-[13px] font-semibold text-slate-500 uppercase tracking-wide" vid="72">强平价格</p>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400" vid="73">
-                            <circle cx="12" cy="12" r="10" vid="74"></circle><path d="M12 16v-4" vid="75"></path><path d="M12 8h.01" vid="76"></path>
-                        </svg>
+                        <div class="relative group" vid="73">
+                            <button type="button" class="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition-colors hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10" aria-label="查看强平价格说明" vid="74">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vid="75">
+                                    <circle cx="12" cy="12" r="10" vid="76"></circle><path d="M12 16v-4" vid="77"></path><path d="M12 8h.01" vid="78"></path>
+                                </svg>
+                            </button>
+                            <div id="liqTooltipText" class="pointer-events-none absolute right-0 top-8 z-20 w-64 rounded-xl bg-slate-900 px-3 py-2 text-left text-xs leading-5 text-white opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100" role="tooltip" vid="79">
+                                强平价格按当前币种的维持保证金率估算，未计入手续费、资金费率和追加保证金。
+                            </div>
+                        </div>
                     </div>
-                    <p id="liqPrice" class="text-3xl font-bold text-slate-900 tracking-tight" vid="77">$0.00</p>
+                    <p id="liqPrice" class="adaptive-number w-full text-3xl font-bold text-slate-900 tracking-tight" vid="77">$0.00</p>
                 </div>
             </div>
 
@@ -158,18 +242,37 @@
                         <span class="text-slate-500 font-medium" vid="87">方向</span>
                         <span id="summaryDirection" class="font-semibold text-emerald-600" vid="88">做多</span>
                     </li>
+                    <li class="flex items-center justify-between text-sm" vid="89">
+                        <span class="text-slate-500 font-medium" vid="90">资金费率</span>
+                        <span id="fundingRate" class="font-semibold text-slate-900" vid="91">--</span>
+                    </li>
+                    <li class="flex items-center justify-between text-sm" vid="92">
+                        <span class="text-slate-500 font-medium" vid="93">下次结算</span>
+                        <span id="fundingTime" class="font-semibold text-slate-900" vid="94">--</span>
+                    </li>
                 </ul>
             </div>
 
         </div>
+        </div>
     </div>
-
-    
-    <p class="mt-8 text-sm text-slate-500 text-center max-w-md" vid="89">
-    </p>
 
     <script>
         (function () {
+            const btnSpotView = document.getElementById('btnSpotView');
+            const btnContractView = document.getElementById('btnContractView');
+            const btnOptionView = document.getElementById('btnOptionView');
+            const spotViewEl = document.getElementById('spotView');
+            const fundingViewEl = document.getElementById('fundingView');
+            const contractViewEl = document.getElementById('contractView');
+            const spotViewBtcPriceEl = document.getElementById('spotViewBtcPrice');
+            const spotViewEthPriceEl = document.getElementById('spotViewEthPrice');
+            const fundingViewSymbolEl = document.getElementById('fundingViewSymbol');
+            const fundingViewRateEl = document.getElementById('fundingViewRate');
+            const fundingViewTimeEl = document.getElementById('fundingViewTime');
+            const assetSelectEl = document.getElementById('assetSelect');
+            const customAssetWrapEl = document.getElementById('customAssetWrap');
+            const inputCustomAsset = document.getElementById('inputCustomAsset');
             const inputLeverage = document.getElementById('inputLeverage');
             const inputMargin = document.getElementById('inputMargin');
             const inputEntry = document.getElementById('inputEntry');
@@ -186,10 +289,46 @@
             const summaryMarginEl = document.getElementById('summaryMargin');
             const summaryPositionEl = document.getElementById('summaryPosition');
             const summaryDirectionEl = document.getElementById('summaryDirection');
+            const fundingRateEl = document.getElementById('fundingRate');
+            const fundingTimeEl = document.getElementById('fundingTime');
+            const fundingHistoryStatusEl = document.getElementById('fundingHistoryStatus');
+            const fundingHistoryEmptyEl = document.getElementById('fundingHistoryEmpty');
+            const fundingHistoryListEl = document.getElementById('fundingHistoryList');
+            const btnRefreshFundingHistory = document.getElementById('btnRefreshFundingHistory');
+            const liqTooltipTextEl = document.getElementById('liqTooltipText');
 
+            let currentView = 'contract';
             let direction = 'long';
             const MIN_LEVERAGE = 1;
             const MAX_LEVERAGE = 125;
+            const BINANCE_SPOT_PRICE_URL = 'https://api.binance.com/api/v3/ticker/price?symbol=';
+            const SPOT_PRICE_REFRESH_MS = 15000;
+            const FUNDING_RATE_REFRESH_MS = 60000;
+            const FUNDING_HISTORY_REFRESH_MS = 300000;
+            const ASSET_CONFIG = {
+                BTC: {
+                    label: 'BTC',
+                    binanceBaseSymbol: 'BTC',
+                    maintenanceMarginRatio: 0.004
+                },
+                ETH: {
+                    label: 'ETH',
+                    binanceBaseSymbol: 'ETH',
+                    maintenanceMarginRatio: 0.005
+                },
+                ALT: {
+                    label: '其他山寨币',
+                    binanceBaseSymbol: 'SOL',
+                    maintenanceMarginRatio: 0.01
+                }
+            };
+            const adaptiveTextConfigs = [
+                { el: pnlValueEl, max: 60, min: 24 },
+                { el: liqPriceEl, max: 30, min: 18 }
+            ];
+            let spotPriceRequestId = 0;
+            let fundingRateRequestId = 0;
+            let fundingHistoryRequestId = 0;
 
             function parseNumber(value) {
                 if (!value) return NaN;
@@ -200,6 +339,39 @@
                 return cleaned ? parseFloat(cleaned) : NaN;
             }
 
+            function sanitizeIntegerInput(value) {
+                return String(value || '').replace(/\D/g, '');
+            }
+
+            function sanitizeDecimalInput(value) {
+                const cleaned = String(value || '').replace(/[^\d.]/g, '');
+                const firstDotIndex = cleaned.indexOf('.');
+
+                if (firstDotIndex === -1) {
+                    return cleaned;
+                }
+
+                return cleaned.slice(0, firstDotIndex + 1) +
+                    cleaned.slice(firstDotIndex + 1).replace(/\./g, '');
+            }
+
+            function sanitizeAssetSymbol(value) {
+                return String(value || '')
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, '')
+                    .slice(0, 12);
+            }
+
+            function preventInvalidInput(event, pattern) {
+                if (!event.data || event.inputType.indexOf('insert') !== 0) {
+                    return;
+                }
+
+                if (!pattern.test(event.data)) {
+                    event.preventDefault();
+                }
+            }
+
             function formatUSD(num, minFraction = 2, maxFraction = 2) {
                 if (!isFinite(num)) return '$0.00';
                 return num.toLocaleString('en-US', {
@@ -207,6 +379,32 @@
                     currency: 'USD',
                     minimumFractionDigits: minFraction,
                     maximumFractionDigits: maxFraction
+                });
+            }
+
+            function getQuoteFractionDigits(num) {
+                if (!isFinite(num)) return 2;
+
+                const abs = Math.abs(num);
+
+                if (abs >= 1) return 2;
+                if (abs >= 0.1) return 4;
+                if (abs >= 0.01) return 5;
+                return 6;
+            }
+
+            function formatQuoteUSD(num) {
+                const digits = getQuoteFractionDigits(num);
+                return formatUSD(num, digits, digits);
+            }
+
+            function formatPlainPrice(num) {
+                if (!isFinite(num)) return '--';
+
+                const digits = getQuoteFractionDigits(num);
+                return num.toLocaleString('en-US', {
+                    minimumFractionDigits: digits,
+                    maximumFractionDigits: digits
                 });
             }
 
@@ -234,9 +432,192 @@
                 return (num >= 0 ? '+' : '-') + Math.abs(num).toFixed(2) + '%';
             }
 
+            function formatFundingRate(rate) {
+                if (!isFinite(rate)) return '--';
+                return (rate >= 0 ? '+' : '') + (rate * 100).toFixed(4) + '%';
+            }
+
+            function formatFundingTime(timestamp) {
+                if (!isFinite(timestamp) || timestamp <= 0) return '--';
+
+                return new Intl.DateTimeFormat('zh-CN', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }).format(new Date(timestamp));
+            }
+
+            function updateFundingRateTone(rate) {
+                fundingRateEl.classList.toggle('text-emerald-600', isFinite(rate) && rate < 0);
+                fundingRateEl.classList.toggle('text-rose-600', isFinite(rate) && rate > 0);
+                fundingRateEl.classList.toggle('text-slate-900', !isFinite(rate) || rate === 0);
+                fundingViewRateEl.classList.toggle('text-emerald-600', isFinite(rate) && rate < 0);
+                fundingViewRateEl.classList.toggle('text-rose-600', isFinite(rate) && rate > 0);
+                fundingViewRateEl.classList.toggle('text-slate-900', !isFinite(rate) || rate === 0);
+            }
+
             function clampLeverage(value) {
                 if (!isFinite(value)) return NaN;
                 return Math.min(MAX_LEVERAGE, Math.max(MIN_LEVERAGE, value));
+            }
+
+            function buildFundingRateUrl(symbol) {
+                return 'https://fapi.binance.com/fapi/v1/premiumIndex?symbol=' + encodeURIComponent(symbol);
+            }
+
+            function buildFundingHistoryUrl(symbol) {
+                return 'https://fapi.binance.com/fapi/v1/fundingRate?symbol=' + encodeURIComponent(symbol) + '&limit=8';
+            }
+
+            function buildSpotPriceUrl(symbol) {
+                return BINANCE_SPOT_PRICE_URL + encodeURIComponent(symbol);
+            }
+
+            function updateTopNav() {
+                const isSpot = currentView === 'spot';
+                const isFunding = currentView === 'funding';
+                const isContract = currentView === 'contract';
+
+                btnSpotView.classList.toggle('text-slate-900', isSpot);
+                btnSpotView.classList.toggle('font-semibold', isSpot);
+                btnSpotView.classList.toggle('text-slate-500', !isSpot);
+                btnSpotView.classList.toggle('font-medium', !isSpot);
+
+                btnContractView.classList.toggle('text-slate-900', isContract);
+                btnContractView.classList.toggle('font-semibold', isContract);
+                btnContractView.classList.toggle('text-slate-500', !isContract);
+                btnContractView.classList.toggle('font-medium', !isContract);
+
+                btnOptionView.classList.toggle('text-slate-900', isFunding);
+                btnOptionView.classList.toggle('font-semibold', isFunding);
+                btnOptionView.classList.toggle('text-slate-500', !isFunding);
+                btnOptionView.classList.toggle('font-medium', !isFunding);
+            }
+
+            function switchView(nextView) {
+                currentView = ['spot', 'contract', 'funding'].indexOf(nextView) >= 0 ? nextView : 'contract';
+                spotViewEl.classList.toggle('hidden', currentView !== 'spot');
+                fundingViewEl.classList.toggle('hidden', currentView !== 'funding');
+                contractViewEl.classList.toggle('hidden', currentView !== 'contract');
+                updateTopNav();
+
+                if (currentView === 'spot') {
+                    fetchSpotPrices();
+                }
+
+                if (currentView === 'funding') {
+                    fetchFundingRate();
+                    fetchFundingHistory();
+                }
+            }
+
+            function getActiveAsset() {
+                const selectedKey = ASSET_CONFIG[assetSelectEl.value] ? assetSelectEl.value : 'BTC';
+                const selectedAsset = ASSET_CONFIG[selectedKey];
+
+                if (selectedKey === 'ALT') {
+                    const customBaseSymbol = sanitizeAssetSymbol(inputCustomAsset.value) || selectedAsset.binanceBaseSymbol;
+
+                    return {
+                        key: selectedKey,
+                        label: customBaseSymbol,
+                        unitSymbol: customBaseSymbol,
+                        binanceBaseSymbol: customBaseSymbol,
+                        binanceSymbol: customBaseSymbol ? customBaseSymbol + 'USDT' : '',
+                        maintenanceMarginRatio: selectedAsset.maintenanceMarginRatio
+                    };
+                }
+
+                return {
+                    key: selectedKey,
+                    label: selectedAsset.label,
+                    unitSymbol: selectedAsset.label,
+                    binanceBaseSymbol: selectedAsset.binanceBaseSymbol,
+                    binanceSymbol: selectedAsset.binanceBaseSymbol + 'USDT',
+                    maintenanceMarginRatio: selectedAsset.maintenanceMarginRatio
+                };
+            }
+
+            function updateLiquidationTooltip() {
+                const asset = getActiveAsset();
+
+                liqTooltipTextEl.textContent =
+                    '强平价格按 ' +
+                    asset.unitSymbol +
+                    ' 合约的维持保证金率估算，当前默认维持保证金率约为 ' +
+                    (asset.maintenanceMarginRatio * 100).toFixed(2) +
+                    '%，未计入手续费、资金费率和追加保证金。';
+            }
+
+            function syncFundingViewHeader() {
+                const asset = getActiveAsset();
+                fundingViewSymbolEl.textContent = asset.binanceSymbol;
+            }
+
+            function syncAssetInputs() {
+                const isAlt = assetSelectEl.value === 'ALT';
+                customAssetWrapEl.classList.toggle('hidden', !isAlt);
+
+                if (isAlt) {
+                    const sanitized = sanitizeAssetSymbol(inputCustomAsset.value) || ASSET_CONFIG.ALT.binanceBaseSymbol;
+                    if (inputCustomAsset.value !== sanitized) {
+                        inputCustomAsset.value = sanitized;
+                    }
+                }
+
+                updateLiquidationTooltip();
+                syncFundingViewHeader();
+            }
+
+            function setSpotTickerText(el, label, price) {
+                el.textContent = isFinite(price) ? formatPlainPrice(price) : '--';
+            }
+
+            function calculateEstimatedLiquidationPrice(entry, leverage, side, maintenanceMarginRatio) {
+                if (!isFinite(entry) || entry <= 0 ||
+                    !isFinite(leverage) || leverage <= 0) {
+                    return NaN;
+                }
+
+                const mmr = isFinite(maintenanceMarginRatio) ? maintenanceMarginRatio : 0;
+
+                if (side === 'long') {
+                    const denominator = 1 - mmr;
+                    if (denominator <= 0) {
+                        return NaN;
+                    }
+
+                    return entry * (1 - 1 / leverage) / denominator;
+                }
+
+                const denominator = 1 + mmr;
+                if (denominator <= 0) {
+                    return NaN;
+                }
+
+                return entry * (1 + 1 / leverage) / denominator;
+            }
+
+            function fitTextToContainer(el, maxSize, minSize) {
+                if (!el) return;
+
+                let nextSize = maxSize;
+                el.style.fontSize = nextSize + 'px';
+
+                while (nextSize > minSize && el.scrollWidth > el.clientWidth + 1) {
+                    nextSize -= 1;
+                    el.style.fontSize = nextSize + 'px';
+                }
+            }
+
+            function refreshAdaptiveText() {
+                window.requestAnimationFrame(function () {
+                    adaptiveTextConfigs.forEach(function (config) {
+                        fitTextToContainer(config.el, config.max, config.min);
+                    });
+                });
             }
 
             function updateResultTone(isPositive) {
@@ -248,14 +629,239 @@
                 roiBadgeEl.classList.toggle('text-rose-700', !isPositive);
             }
 
+            function updateFundingHistoryStatus(message) {
+                fundingHistoryStatusEl.textContent = message;
+            }
+
+            function formatFundingHistoryTime(timestamp) {
+                if (!isFinite(timestamp) || timestamp <= 0) return '--';
+
+                return new Intl.DateTimeFormat('zh-CN', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }).format(new Date(timestamp));
+            }
+
+            function getFundingDirectionLabel(rate) {
+                if (!isFinite(rate) || rate === 0) {
+                    return 'Flat';
+                }
+
+                return rate > 0 ? 'Long->Short' : 'Short->Long';
+            }
+
+            function renderFundingHistory(items) {
+                fundingHistoryListEl.innerHTML = '';
+
+                if (!Array.isArray(items) || items.length === 0) {
+                    fundingHistoryEmptyEl.textContent = 'No funding history available.';
+                    fundingHistoryEmptyEl.classList.remove('hidden');
+                    fundingHistoryListEl.classList.add('hidden');
+                    return;
+                }
+
+                fundingHistoryEmptyEl.classList.add('hidden');
+                fundingHistoryListEl.classList.remove('hidden');
+
+                items.forEach(function (item) {
+                    const rate = parseFloat(item.fundingRate);
+                    const markPrice = parseFloat(item.markPrice);
+                    const row = document.createElement('div');
+                    const topRow = document.createElement('div');
+                    const timeEl = document.createElement('p');
+                    const rateWrap = document.createElement('div');
+                    const rateEl = document.createElement('span');
+                    const directionEl = document.createElement('span');
+                    const bottomRow = document.createElement('div');
+                    const markLabelEl = document.createElement('span');
+                    const markValueEl = document.createElement('span');
+
+                    row.className = 'rounded-xl border border-slate-200 bg-white px-4 py-3';
+
+                    topRow.className = 'flex items-center justify-between gap-3';
+                    timeEl.className = 'text-sm font-semibold text-slate-700';
+                    timeEl.textContent = formatFundingHistoryTime(Number(item.fundingTime));
+
+                    rateWrap.className = 'flex items-center gap-2';
+                    rateEl.className = 'text-sm font-bold ' + (
+                        rate > 0 ? 'text-rose-600' :
+                        rate < 0 ? 'text-emerald-600' :
+                        'text-slate-900'
+                    );
+                    rateEl.textContent = formatFundingRate(rate);
+
+                    directionEl.className = 'rounded-full px-2 py-0.5 text-[11px] font-semibold ' + (
+                        rate > 0 ? 'bg-rose-50 text-rose-600' :
+                        rate < 0 ? 'bg-emerald-50 text-emerald-600' :
+                        'bg-slate-100 text-slate-500'
+                    );
+                    directionEl.textContent = getFundingDirectionLabel(rate);
+
+                    bottomRow.className = 'mt-2 flex items-center justify-between text-xs text-slate-400';
+                    markLabelEl.textContent = 'Mark price';
+                    markValueEl.className = 'font-medium text-slate-500';
+                    markValueEl.textContent = isFinite(markPrice) ? formatQuoteUSD(markPrice) : '--';
+
+                    rateWrap.appendChild(rateEl);
+                    rateWrap.appendChild(directionEl);
+                    topRow.appendChild(timeEl);
+                    topRow.appendChild(rateWrap);
+                    bottomRow.appendChild(markLabelEl);
+                    bottomRow.appendChild(markValueEl);
+                    row.appendChild(topRow);
+                    row.appendChild(bottomRow);
+                    fundingHistoryListEl.appendChild(row);
+                });
+            }
+
+            async function fetchSpotPrices() {
+                const requestId = ++spotPriceRequestId;
+
+                try {
+                    const responses = await Promise.all([
+                        fetch(buildSpotPriceUrl('BTCUSDT'), { cache: 'no-store' }),
+                        fetch(buildSpotPriceUrl('ETHUSDT'), { cache: 'no-store' })
+                    ]);
+
+                    if (responses.some(function (response) { return !response.ok; })) {
+                        const failedResponse = responses.find(function (response) { return !response.ok; });
+                        throw new Error('HTTP ' + failedResponse.status);
+                    }
+
+                    const [btcData, ethData] = await Promise.all([
+                        responses[0].json(),
+                        responses[1].json()
+                    ]);
+
+                    if (requestId !== spotPriceRequestId) {
+                        return;
+                    }
+
+                    setSpotTickerText(spotViewBtcPriceEl, 'BTC', parseFloat(btcData.price));
+                    setSpotTickerText(spotViewEthPriceEl, 'ETH', parseFloat(ethData.price));
+                } catch (error) {
+                    if (requestId !== spotPriceRequestId) {
+                        return;
+                    }
+
+                    setSpotTickerText(spotViewBtcPriceEl, 'BTC', NaN);
+                    setSpotTickerText(spotViewEthPriceEl, 'ETH', NaN);
+                }
+            }
+
+            async function fetchFundingRate() {
+                const requestId = ++fundingRateRequestId;
+                const asset = getActiveAsset();
+                const symbol = asset.binanceSymbol;
+
+                fundingRateEl.textContent = '--';
+                fundingTimeEl.textContent = '--';
+                fundingViewRateEl.textContent = '--';
+                fundingViewTimeEl.textContent = '--';
+                updateFundingRateTone(NaN);
+
+                try {
+                    const response = await fetch(buildFundingRateUrl(symbol), {
+                        cache: 'no-store'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+
+                    const data = await response.json();
+                    if (requestId !== fundingRateRequestId) {
+                        return;
+                    }
+
+                    const fundingRate = parseFloat(data.lastFundingRate);
+                    const nextFundingTime = Number(data.nextFundingTime);
+                    const markPrice = parseFloat(data.markPrice);
+                    const updatedAt = new Intl.DateTimeFormat('zh-CN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }).format(new Date());
+
+                    fundingRateEl.textContent = formatFundingRate(fundingRate);
+                    fundingTimeEl.textContent = formatFundingTime(nextFundingTime);
+                    fundingViewRateEl.textContent = formatFundingRate(fundingRate);
+                    fundingViewTimeEl.textContent = formatFundingTime(nextFundingTime);
+                    updateFundingRateTone(fundingRate);
+                } catch (error) {
+                    if (requestId !== fundingRateRequestId) {
+                        return;
+                    }
+
+                    fundingRateEl.textContent = '--';
+                    fundingTimeEl.textContent = '--';
+                    fundingViewRateEl.textContent = '--';
+                    fundingViewTimeEl.textContent = '--';
+                    updateFundingRateTone(NaN);
+                }
+            }
+
+            async function fetchFundingHistory() {
+                const requestId = ++fundingHistoryRequestId;
+                const asset = getActiveAsset();
+                const symbol = asset.binanceSymbol;
+
+                try {
+                    btnRefreshFundingHistory.disabled = true;
+                    btnRefreshFundingHistory.textContent = 'Loading';
+                    updateFundingHistoryStatus('Loading recent Binance ' + symbol + ' funding history...');
+
+                    const response = await fetch(buildFundingHistoryUrl(symbol), {
+                        cache: 'no-store'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+
+                    const data = await response.json();
+                    if (requestId !== fundingHistoryRequestId) {
+                        return;
+                    }
+
+                    const items = Array.isArray(data) ? data.slice().reverse() : [];
+                    const updatedAt = new Intl.DateTimeFormat('zh-CN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }).format(new Date());
+
+                    renderFundingHistory(items);
+                    updateFundingHistoryStatus(symbol + ' | Last 8 settlements | Updated ' + updatedAt);
+                } catch (error) {
+                    if (requestId !== fundingHistoryRequestId) {
+                        return;
+                    }
+
+                    renderFundingHistory([]);
+                    updateFundingHistoryStatus(symbol + ' funding history unavailable.');
+                } finally {
+                    btnRefreshFundingHistory.disabled = false;
+                    btnRefreshFundingHistory.textContent = 'Refresh';
+                }
+            }
+
             function resetOutputs() {
-                positionSizeEl.textContent = '0.0000 BTC';
+                const asset = getActiveAsset();
+
+                positionSizeEl.textContent = '0.0000 ' + asset.unitSymbol;
                 pnlValueEl.textContent = '+$0.00';
                 roiValueEl.textContent = '+0.00%';
                 liqPriceEl.textContent = '$0.00';
                 summaryMarginEl.textContent = '$0.00';
                 summaryPositionEl.textContent = '$0.00';
                 updateResultTone(true);
+                refreshAdaptiveText();
             }
 
             function normalizeLeverageInput() {
@@ -264,8 +870,21 @@
             }
 
             function normalizePriceInput(input) {
-                const value = parseNumber(input.value);
-                input.value = isFinite(value) && value > 0 ? formatInputNumber(value, 0) : '';
+                const rawValue = String(input.value || '').replace(/,/g, '').trim();
+
+                if (!rawValue) {
+                    input.value = '';
+                    return;
+                }
+
+                // Preserve the user's decimal input instead of coercing it to an integer.
+                if (/^\d*\.?\d*$/.test(rawValue)) {
+                    input.value = rawValue;
+                    return;
+                }
+
+                const value = parseNumber(rawValue);
+                input.value = isFinite(value) && value > 0 ? String(value) : '';
             }
 
             function updateDirectionButtons() {
@@ -293,6 +912,7 @@
             }
 
             function recalc() {
+                const asset = getActiveAsset();
                 const leverage = clampLeverage(parseFloat(inputLeverage.value));
                 const margin = parseNumber(inputMargin.value);
                 const entry = parseNumber(inputEntry.value);
@@ -319,21 +939,22 @@
                 const pnl = pnlPerUnit * size;
                 const roi = (pnl / margin) * 100;
 
-                let liq;
-                if (direction === 'long') {
-                    liq = entry * (1 - 1 / leverage);
-                } else {
-                    liq = entry * (1 + 1 / leverage);
-                }
+                const liq = calculateEstimatedLiquidationPrice(
+                    entry,
+                    leverage,
+                    direction,
+                    asset.maintenanceMarginRatio
+                );
 
                 pnlValueEl.textContent = formatSignedUSD(pnl);
                 roiValueEl.textContent = formatSignedPercent(roi);
                 updateResultTone(pnl >= 0);
 
-                liqPriceEl.textContent = formatUSD(liq);
-                positionSizeEl.textContent = formatNumber(size, 4) + ' BTC';
+                liqPriceEl.textContent = formatQuoteUSD(liq);
+                positionSizeEl.textContent = formatNumber(size, 4) + ' ' + asset.unitSymbol;
                 summaryMarginEl.textContent = formatUSD(margin);
                 summaryPositionEl.textContent = formatUSD(positionValue);
+                refreshAdaptiveText();
             }
 
             function clearAll() {
@@ -362,14 +983,83 @@
                 clearAll();
             });
 
-            inputLeverage.addEventListener('input', recalc);
+            btnRefreshFundingHistory.addEventListener('click', function () {
+                fetchFundingHistory();
+            });
+
+            btnSpotView.addEventListener('click', function () {
+                switchView('spot');
+            });
+
+            btnContractView.addEventListener('click', function () {
+                switchView('contract');
+            });
+
+            btnOptionView.addEventListener('click', function () {
+                switchView('funding');
+            });
+
+            assetSelectEl.addEventListener('change', function () {
+                syncAssetInputs();
+                recalc();
+                fetchFundingRate();
+                fetchFundingHistory();
+            });
+
+            inputCustomAsset.addEventListener('beforeinput', function (event) {
+                preventInvalidInput(event, /^[a-zA-Z0-9]+$/);
+            });
+            inputCustomAsset.addEventListener('input', function () {
+                const sanitized = sanitizeAssetSymbol(inputCustomAsset.value);
+
+                if (inputCustomAsset.value !== sanitized) {
+                    inputCustomAsset.value = sanitized;
+                }
+
+                updateLiquidationTooltip();
+                recalc();
+            });
+            inputCustomAsset.addEventListener('blur', function () {
+                if (assetSelectEl.value === 'ALT' && !sanitizeAssetSymbol(inputCustomAsset.value)) {
+                    inputCustomAsset.value = ASSET_CONFIG.ALT.binanceBaseSymbol;
+                }
+
+                syncAssetInputs();
+                recalc();
+                fetchFundingRate();
+                fetchFundingHistory();
+            });
+
+            inputLeverage.addEventListener('beforeinput', function (event) {
+                preventInvalidInput(event, /^\d+$/);
+            });
+            inputLeverage.addEventListener('input', function () {
+                const sanitized = sanitizeIntegerInput(inputLeverage.value);
+
+                if (inputLeverage.value !== sanitized) {
+                    inputLeverage.value = sanitized;
+                }
+
+                recalc();
+            });
             inputLeverage.addEventListener('blur', function () {
                 normalizeLeverageInput();
                 recalc();
             });
 
             [inputMargin, inputEntry, inputExit].forEach(function (el) {
-                el.addEventListener('input', recalc);
+                el.addEventListener('beforeinput', function (event) {
+                    preventInvalidInput(event, /^[\d.]+$/);
+                });
+                el.addEventListener('input', function () {
+                    const sanitized = sanitizeDecimalInput(el.value);
+
+                    if (el.value !== sanitized) {
+                        el.value = sanitized;
+                    }
+
+                    recalc();
+                });
                 el.addEventListener('focus', function () {
                     const value = parseNumber(el.value);
                     el.value = isFinite(value) ? String(value) : '';
@@ -380,8 +1070,21 @@
                 });
             });
 
+            window.addEventListener('resize', refreshAdaptiveText);
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(refreshAdaptiveText);
+            }
+
+            syncAssetInputs();
+            switchView('contract');
             updateDirectionButtons();
             recalc();
+            fetchSpotPrices();
+            fetchFundingRate();
+            fetchFundingHistory();
+            window.setInterval(fetchSpotPrices, SPOT_PRICE_REFRESH_MS);
+            window.setInterval(fetchFundingRate, FUNDING_RATE_REFRESH_MS);
+            window.setInterval(fetchFundingHistory, FUNDING_HISTORY_REFRESH_MS);
         })();
     </script>
 
