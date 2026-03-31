@@ -49,7 +49,7 @@
 
     <div id="spotView" class="hidden w-full max-w-[960px]" vid="21">
         <div class="bg-white rounded-[24px] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] border border-slate-200/60 overflow-hidden" vid="21">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-0 min-h-[420px]" vid="26">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-0 min-h-[320px]" vid="26">
                 <div class="px-8 py-10 md:px-10 border-b md:border-b-0 md:border-r border-slate-100 flex flex-col items-center justify-center text-center" vid="27">
                     <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide" vid="28">BTC / USDT</p>
                     <p id="spotViewBtcPrice" class="mt-4 text-5xl md:text-6xl font-bold tracking-tight text-slate-900 tabular-nums" vid="29">--</p>
@@ -57,6 +57,18 @@
                 <div class="px-8 py-10 md:px-10 flex flex-col items-center justify-center text-center" vid="30">
                     <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide" vid="31">ETH / USDT</p>
                     <p id="spotViewEthPrice" class="mt-4 text-5xl md:text-6xl font-bold tracking-tight text-slate-900 tabular-nums" vid="32">--</p>
+                </div>
+            </div>
+            <div class="border-t border-slate-100 px-8 py-8 md:px-10 md:py-10">
+                <div class="flex flex-col items-center justify-center text-center">
+                    <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide">恐惧 & 贪婪指数</p>
+                    <p id="fearGreedValue" class="mt-4 text-5xl md:text-6xl font-bold tracking-tight text-slate-900 tabular-nums">--</p>
+                    <p id="fearGreedLabel" class="mt-3 text-base font-semibold text-slate-600">--</p>
+                    <p id="fearGreedUpdated" class="mt-2 text-xs text-slate-400">--</p>
+                    <p class="mt-3 text-xs text-slate-400">
+                        数据来源：
+                        <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noreferrer" class="underline underline-offset-2 hover:text-slate-600">Alternative.me</a>
+                    </p>
                 </div>
             </div>
         </div>
@@ -103,9 +115,15 @@
         
         <div class="w-full md:w-[55%] p-8 md:p-10 flex flex-col" vid="22">
             
-            <div class="mb-8 flex items-center justify-between" vid="23">
+            <div class="mb-8 flex items-center justify-between gap-4 flex-wrap" vid="23">
                 <h2 class="text-lg font-semibold text-slate-800" vid="24">仓位详情</h2>
-                <div class="flex items-center gap-2 text-sm text-slate-500" vid="25">
+                <div class="flex items-center gap-2 text-sm text-slate-500 flex-wrap" vid="25">
+                    <button id="btnAssetBtc" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition-all" type="button">BTC</button>
+                    <button id="btnAssetEth" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-500 transition-all" type="button">ETH</button>
+                    <div class="relative">
+                        <input id="inputAltAsset" type="text" value="SOL" placeholder="山寨币" class="w-[132px] bg-white border border-slate-200 rounded-xl py-2.5 pl-4 pr-14 text-slate-900 text-sm font-semibold uppercase focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">USDT</span>
+                    </div>
                 </div>
             </div>
 
@@ -126,27 +144,6 @@
             </div>
 
             <div class="flex flex-col gap-6" vid="34">
-                <div class="flex flex-col sm:flex-row gap-6" vid="35">
-                    <div class="flex-1" vid="36">
-                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="37">币种</label>
-                        <div class="relative" vid="38">
-                            <select id="assetSelect" class="w-full appearance-none bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-12 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="39">
-                                <option value="BTC">BTC</option>
-                                <option value="ETH">ETH</option>
-                                <option value="ALT">其他山寨币</option>
-                            </select>
-                            <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="40">▼</span>
-                        </div>
-                    </div>
-                    <div id="customAssetWrap" class="flex-1 hidden" vid="41">
-                        <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="42">山寨币代码</label>
-                        <div class="relative" vid="43">
-                            <input id="inputCustomAsset" type="text" value="SOL" placeholder="如 SOL、XRP、DOGE" class="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-4 pr-20 text-slate-900 font-semibold uppercase focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all" vid="44">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold" vid="45">/USDT</span>
-                        </div>
-                    </div>
-                </div>
-                
                 <div class="flex flex-col sm:flex-row gap-6" vid="46">
                     <div class="flex-1" vid="47">
                         <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" vid="48">杠杆</label>
@@ -267,12 +264,15 @@
             const contractViewEl = document.getElementById('contractView');
             const spotViewBtcPriceEl = document.getElementById('spotViewBtcPrice');
             const spotViewEthPriceEl = document.getElementById('spotViewEthPrice');
+            const fearGreedValueEl = document.getElementById('fearGreedValue');
+            const fearGreedLabelEl = document.getElementById('fearGreedLabel');
+            const fearGreedUpdatedEl = document.getElementById('fearGreedUpdated');
             const fundingViewSymbolEl = document.getElementById('fundingViewSymbol');
             const fundingViewRateEl = document.getElementById('fundingViewRate');
             const fundingViewTimeEl = document.getElementById('fundingViewTime');
-            const assetSelectEl = document.getElementById('assetSelect');
-            const customAssetWrapEl = document.getElementById('customAssetWrap');
-            const inputCustomAsset = document.getElementById('inputCustomAsset');
+            const btnAssetBtc = document.getElementById('btnAssetBtc');
+            const btnAssetEth = document.getElementById('btnAssetEth');
+            const inputAltAsset = document.getElementById('inputAltAsset');
             const inputLeverage = document.getElementById('inputLeverage');
             const inputMargin = document.getElementById('inputMargin');
             const inputEntry = document.getElementById('inputEntry');
@@ -298,11 +298,14 @@
             const liqTooltipTextEl = document.getElementById('liqTooltipText');
 
             let currentView = 'contract';
+            let activeAssetKey = 'BTC';
             let direction = 'long';
             const MIN_LEVERAGE = 1;
             const MAX_LEVERAGE = 125;
             const BINANCE_SPOT_PRICE_URL = 'https://api.binance.com/api/v3/ticker/price?symbol=';
-            const SPOT_PRICE_REFRESH_MS = 15000;
+            const FEAR_GREED_API_URL = 'https://api.alternative.me/fng/?limit=1';
+            const SPOT_PRICE_REFRESH_MS = 5000;
+            const FEAR_GREED_REFRESH_MS = 300000;
             const FUNDING_RATE_REFRESH_MS = 60000;
             const FUNDING_HISTORY_REFRESH_MS = 300000;
             const ASSET_CONFIG = {
@@ -327,6 +330,7 @@
                 { el: liqPriceEl, max: 30, min: 18 }
             ];
             let spotPriceRequestId = 0;
+            let fearGreedRequestId = 0;
             let fundingRateRequestId = 0;
             let fundingHistoryRequestId = 0;
 
@@ -449,6 +453,18 @@
                 }).format(new Date(timestamp));
             }
 
+            function formatFearGreedTime(timestampSeconds) {
+                if (!isFinite(timestampSeconds) || timestampSeconds <= 0) return '--';
+
+                return new Intl.DateTimeFormat('zh-CN', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }).format(new Date(timestampSeconds * 1000));
+            }
+
             function updateFundingRateTone(rate) {
                 fundingRateEl.classList.toggle('text-emerald-600', isFinite(rate) && rate < 0);
                 fundingRateEl.classList.toggle('text-rose-600', isFinite(rate) && rate > 0);
@@ -473,6 +489,33 @@
 
             function buildSpotPriceUrl(symbol) {
                 return BINANCE_SPOT_PRICE_URL + encodeURIComponent(symbol);
+            }
+
+            function updateAssetButtons() {
+                const isBtc = activeAssetKey === 'BTC';
+                const isEth = activeAssetKey === 'ETH';
+                const isAlt = activeAssetKey === 'ALT';
+
+                btnAssetBtc.classList.toggle('bg-white', isBtc);
+                btnAssetBtc.classList.toggle('shadow-sm', isBtc);
+                btnAssetBtc.classList.toggle('border-slate-200', isBtc);
+                btnAssetBtc.classList.toggle('text-slate-900', isBtc);
+                btnAssetBtc.classList.toggle('font-semibold', isBtc);
+                btnAssetBtc.classList.toggle('text-slate-500', !isBtc);
+                btnAssetBtc.classList.toggle('font-medium', !isBtc);
+
+                btnAssetEth.classList.toggle('bg-white', isEth);
+                btnAssetEth.classList.toggle('shadow-sm', isEth);
+                btnAssetEth.classList.toggle('border-slate-200', isEth);
+                btnAssetEth.classList.toggle('text-slate-900', isEth);
+                btnAssetEth.classList.toggle('font-semibold', isEth);
+                btnAssetEth.classList.toggle('text-slate-500', !isEth);
+                btnAssetEth.classList.toggle('font-medium', !isEth);
+
+                inputAltAsset.classList.toggle('border-slate-900', isAlt);
+                inputAltAsset.classList.toggle('ring-2', isAlt);
+                inputAltAsset.classList.toggle('ring-slate-900/10', isAlt);
+                inputAltAsset.classList.toggle('font-semibold', true);
             }
 
             function updateTopNav() {
@@ -505,6 +548,7 @@
 
                 if (currentView === 'spot') {
                     fetchSpotPrices();
+                    fetchFearGreedIndex();
                 }
 
                 if (currentView === 'funding') {
@@ -514,11 +558,11 @@
             }
 
             function getActiveAsset() {
-                const selectedKey = ASSET_CONFIG[assetSelectEl.value] ? assetSelectEl.value : 'BTC';
+                const selectedKey = ASSET_CONFIG[activeAssetKey] ? activeAssetKey : 'BTC';
                 const selectedAsset = ASSET_CONFIG[selectedKey];
 
                 if (selectedKey === 'ALT') {
-                    const customBaseSymbol = sanitizeAssetSymbol(inputCustomAsset.value) || selectedAsset.binanceBaseSymbol;
+                    const customBaseSymbol = sanitizeAssetSymbol(inputAltAsset.value) || selectedAsset.binanceBaseSymbol;
 
                     return {
                         key: selectedKey,
@@ -557,22 +601,73 @@
             }
 
             function syncAssetInputs() {
-                const isAlt = assetSelectEl.value === 'ALT';
-                customAssetWrapEl.classList.toggle('hidden', !isAlt);
-
-                if (isAlt) {
-                    const sanitized = sanitizeAssetSymbol(inputCustomAsset.value) || ASSET_CONFIG.ALT.binanceBaseSymbol;
-                    if (inputCustomAsset.value !== sanitized) {
-                        inputCustomAsset.value = sanitized;
+                if (activeAssetKey === 'ALT') {
+                    const sanitized = sanitizeAssetSymbol(inputAltAsset.value) || ASSET_CONFIG.ALT.binanceBaseSymbol;
+                    if (inputAltAsset.value !== sanitized) {
+                        inputAltAsset.value = sanitized;
                     }
                 }
 
+                updateAssetButtons();
                 updateLiquidationTooltip();
                 syncFundingViewHeader();
             }
 
             function setSpotTickerText(el, label, price) {
                 el.textContent = isFinite(price) ? formatPlainPrice(price) : '--';
+            }
+
+            function updateFearGreedTone(classification) {
+                const normalized = String(classification || '').toLowerCase();
+                const isGreed = normalized.indexOf('greed') >= 0;
+                const isFear = normalized.indexOf('fear') >= 0;
+
+                fearGreedValueEl.classList.toggle('text-emerald-600', isGreed);
+                fearGreedValueEl.classList.toggle('text-rose-600', isFear);
+                fearGreedValueEl.classList.toggle('text-slate-900', !isGreed && !isFear);
+                fearGreedLabelEl.classList.toggle('text-emerald-600', isGreed);
+                fearGreedLabelEl.classList.toggle('text-rose-600', isFear);
+                fearGreedLabelEl.classList.toggle('text-slate-600', !isGreed && !isFear);
+            }
+
+            async function fetchFearGreedIndex() {
+                const requestId = ++fearGreedRequestId;
+
+                try {
+                    const response = await fetch(FEAR_GREED_API_URL, {
+                        cache: 'no-store'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+
+                    const payload = await response.json();
+                    if (requestId !== fearGreedRequestId) {
+                        return;
+                    }
+
+                    const item = Array.isArray(payload.data) ? payload.data[0] : null;
+                    const value = item ? parseInt(item.value, 10) : NaN;
+                    const classification = item ? item.value_classification : '';
+                    const timestamp = item ? Number(item.timestamp) : NaN;
+
+                    fearGreedValueEl.textContent = isFinite(value) ? String(value) : '--';
+                    fearGreedLabelEl.textContent = classification || '--';
+                    fearGreedUpdatedEl.textContent = isFinite(timestamp)
+                        ? '更新时间 ' + formatFearGreedTime(timestamp)
+                        : '--';
+                    updateFearGreedTone(classification);
+                } catch (error) {
+                    if (requestId !== fearGreedRequestId) {
+                        return;
+                    }
+
+                    fearGreedValueEl.textContent = '--';
+                    fearGreedLabelEl.textContent = '--';
+                    fearGreedUpdatedEl.textContent = '--';
+                    updateFearGreedTone('');
+                }
             }
 
             function calculateEstimatedLiquidationPrice(entry, leverage, side, maintenanceMarginRatio) {
@@ -999,29 +1094,44 @@
                 switchView('funding');
             });
 
-            assetSelectEl.addEventListener('change', function () {
+            btnAssetBtc.addEventListener('click', function () {
+                activeAssetKey = 'BTC';
                 syncAssetInputs();
                 recalc();
                 fetchFundingRate();
                 fetchFundingHistory();
             });
 
-            inputCustomAsset.addEventListener('beforeinput', function (event) {
+            btnAssetEth.addEventListener('click', function () {
+                activeAssetKey = 'ETH';
+                syncAssetInputs();
+                recalc();
+                fetchFundingRate();
+                fetchFundingHistory();
+            });
+
+            inputAltAsset.addEventListener('beforeinput', function (event) {
                 preventInvalidInput(event, /^[a-zA-Z0-9]+$/);
             });
-            inputCustomAsset.addEventListener('input', function () {
-                const sanitized = sanitizeAssetSymbol(inputCustomAsset.value);
-
-                if (inputCustomAsset.value !== sanitized) {
-                    inputCustomAsset.value = sanitized;
-                }
-
-                updateLiquidationTooltip();
+            inputAltAsset.addEventListener('focus', function () {
+                activeAssetKey = 'ALT';
+                syncAssetInputs();
                 recalc();
             });
-            inputCustomAsset.addEventListener('blur', function () {
-                if (assetSelectEl.value === 'ALT' && !sanitizeAssetSymbol(inputCustomAsset.value)) {
-                    inputCustomAsset.value = ASSET_CONFIG.ALT.binanceBaseSymbol;
+            inputAltAsset.addEventListener('input', function () {
+                const sanitized = sanitizeAssetSymbol(inputAltAsset.value);
+
+                if (inputAltAsset.value !== sanitized) {
+                    inputAltAsset.value = sanitized;
+                }
+
+                activeAssetKey = 'ALT';
+                syncAssetInputs();
+                recalc();
+            });
+            inputAltAsset.addEventListener('blur', function () {
+                if (activeAssetKey === 'ALT' && !sanitizeAssetSymbol(inputAltAsset.value)) {
+                    inputAltAsset.value = ASSET_CONFIG.ALT.binanceBaseSymbol;
                 }
 
                 syncAssetInputs();
@@ -1080,9 +1190,11 @@
             updateDirectionButtons();
             recalc();
             fetchSpotPrices();
+            fetchFearGreedIndex();
             fetchFundingRate();
             fetchFundingHistory();
             window.setInterval(fetchSpotPrices, SPOT_PRICE_REFRESH_MS);
+            window.setInterval(fetchFearGreedIndex, FEAR_GREED_REFRESH_MS);
             window.setInterval(fetchFundingRate, FUNDING_RATE_REFRESH_MS);
             window.setInterval(fetchFundingHistory, FUNDING_HISTORY_REFRESH_MS);
         })();
