@@ -44,6 +44,7 @@
             <button id="btnSpotView" class="hover:text-slate-900 transition-colors" vid="18">现货</button>
             <button id="btnContractView" class="text-slate-900 font-semibold transition-colors" vid="19">合约</button>
             <button id="btnOptionView" class="hover:text-slate-900 transition-colors" vid="20">资金费率</button>
+            <button id="btnFearGreedView" class="hover:text-slate-900 transition-colors">恐惧贪婪</button>
         </div>
     </div>
 
@@ -59,17 +60,20 @@
                     <p id="spotViewEthPrice" class="mt-4 text-5xl md:text-6xl font-bold tracking-tight text-slate-900 tabular-nums" vid="32">--</p>
                 </div>
             </div>
-            <div class="border-t border-slate-100 px-8 py-8 md:px-10 md:py-10">
-                <div class="flex flex-col items-center justify-center text-center">
-                    <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide">恐惧 & 贪婪指数</p>
-                    <p id="fearGreedValue" class="mt-4 text-5xl md:text-6xl font-bold tracking-tight text-slate-900 tabular-nums">--</p>
-                    <p id="fearGreedLabel" class="mt-3 text-base font-semibold text-slate-600">--</p>
-                    <p id="fearGreedUpdated" class="mt-2 text-xs text-slate-400">--</p>
-                    <p class="mt-3 text-xs text-slate-400">
-                        数据来源：
-                        <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noreferrer" class="underline underline-offset-2 hover:text-slate-600">Alternative.me</a>
-                    </p>
-                </div>
+        </div>
+    </div>
+
+    <div id="fearGreedView" class="hidden w-full max-w-[960px]">
+        <div class="bg-white rounded-[24px] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] border border-slate-200/60 min-h-[420px] flex items-center justify-center px-8 py-10 md:px-10">
+            <div class="flex flex-col items-center justify-center text-center">
+                <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide">恐惧 & 贪婪指数</p>
+                <p id="fearGreedValue" class="mt-4 text-6xl md:text-7xl font-bold tracking-tight text-slate-900 tabular-nums">--</p>
+                <p id="fearGreedLabel" class="mt-4 text-lg font-semibold text-slate-600">--</p>
+                <p id="fearGreedUpdated" class="mt-3 text-xs text-slate-400">--</p>
+                <p class="mt-3 text-xs text-slate-400">
+                    数据来源：
+                    <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noreferrer" class="underline underline-offset-2 hover:text-slate-600">Alternative.me</a>
+                </p>
             </div>
         </div>
     </div>
@@ -259,7 +263,9 @@
             const btnSpotView = document.getElementById('btnSpotView');
             const btnContractView = document.getElementById('btnContractView');
             const btnOptionView = document.getElementById('btnOptionView');
+            const btnFearGreedView = document.getElementById('btnFearGreedView');
             const spotViewEl = document.getElementById('spotView');
+            const fearGreedViewEl = document.getElementById('fearGreedView');
             const fundingViewEl = document.getElementById('fundingView');
             const contractViewEl = document.getElementById('contractView');
             const spotViewBtcPriceEl = document.getElementById('spotViewBtcPrice');
@@ -521,6 +527,7 @@
             function updateTopNav() {
                 const isSpot = currentView === 'spot';
                 const isFunding = currentView === 'funding';
+                const isFearGreed = currentView === 'feargreed';
                 const isContract = currentView === 'contract';
 
                 btnSpotView.classList.toggle('text-slate-900', isSpot);
@@ -537,23 +544,32 @@
                 btnOptionView.classList.toggle('font-semibold', isFunding);
                 btnOptionView.classList.toggle('text-slate-500', !isFunding);
                 btnOptionView.classList.toggle('font-medium', !isFunding);
+
+                btnFearGreedView.classList.toggle('text-slate-900', isFearGreed);
+                btnFearGreedView.classList.toggle('font-semibold', isFearGreed);
+                btnFearGreedView.classList.toggle('text-slate-500', !isFearGreed);
+                btnFearGreedView.classList.toggle('font-medium', !isFearGreed);
             }
 
             function switchView(nextView) {
-                currentView = ['spot', 'contract', 'funding'].indexOf(nextView) >= 0 ? nextView : 'contract';
+                currentView = ['spot', 'contract', 'funding', 'feargreed'].indexOf(nextView) >= 0 ? nextView : 'contract';
                 spotViewEl.classList.toggle('hidden', currentView !== 'spot');
+                fearGreedViewEl.classList.toggle('hidden', currentView !== 'feargreed');
                 fundingViewEl.classList.toggle('hidden', currentView !== 'funding');
                 contractViewEl.classList.toggle('hidden', currentView !== 'contract');
                 updateTopNav();
 
                 if (currentView === 'spot') {
                     fetchSpotPrices();
-                    fetchFearGreedIndex();
                 }
 
                 if (currentView === 'funding') {
                     fetchFundingRate();
                     fetchFundingHistory();
+                }
+
+                if (currentView === 'feargreed') {
+                    fetchFearGreedIndex();
                 }
             }
 
@@ -1092,6 +1108,10 @@
 
             btnOptionView.addEventListener('click', function () {
                 switchView('funding');
+            });
+
+            btnFearGreedView.addEventListener('click', function () {
+                switchView('feargreed');
             });
 
             btnAssetBtc.addEventListener('click', function () {
